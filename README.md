@@ -99,10 +99,13 @@ scp -r cockpit <your-pi-username>@<pi-ip>:/home/<your-pi-username>/
 Then, over SSH on the Pi:
 
 ```bash
+sudo apt update
+sudo apt install -y python3-lgpio   # prebuilt GPIO backend — avoids compiling lgpio via pip
+
 cd ~/cockpit/backend
-python -m venv .venv
+python -m venv --system-site-packages .venv   # --system-site-packages lets the venv see apt's python3-lgpio
 source .venv/bin/activate
-pip install -r requirements.txt   # installs gpiozero + lgpio (ARM-only marker) + fastapi/uvicorn/httpx
+pip install -r requirements.txt     # installs gpiozero + fastapi/uvicorn/httpx
 
 cd ../frontend
 npm install
@@ -161,10 +164,18 @@ control. All GND legs share one common ground rail back to any Pi GND pin.
   `127.0.0.1` — if it says that, the bind host in your run command is wrong).
   Also check the Pi's firewall (`sudo ufw status`) isn't blocking port 8000.
 - **Status bar stuck on MOCK on the Pi:** check the startup log line from
-  `hardware.py` — it prints the real GPIO init error. Common causes: `lgpio`
-  didn't install (`pip install lgpio` or `sudo apt install -y
-  python3-lgpio`), or you're not in the `gpio` group (`sudo usermod -aG gpio
-  $USER`, then log out/in).
+  `hardware.py` — it prints the real GPIO init error (`No module named
+  'lgpio'` means the venv can't see it). Fix: `sudo apt install -y
+  python3-lgpio`, then recreate the venv **with** `--system-site-packages`
+  (`python -m venv --system-site-packages .venv`) so it picks up the
+  apt-installed module — a plain `.venv` without that flag won't see it. Also
+  make sure you're in the `gpio` group (`sudo usermod -aG gpio $USER`, then
+  log out/in).
+- **`pip install` fails building `lgpio` wheel (`swig: No such file or
+  directory` etc.):** you're hitting the exact problem the apt-based install
+  above avoids — `lgpio` isn't in `requirements.txt` on purpose. Don't
+  `pip install lgpio` directly; use `sudo apt install -y python3-lgpio` +
+  `--system-site-packages` as shown in section 3.
 - **Pin factory errors:** make sure you're on Raspberry Pi OS with the
   `lgpio` library available, and that no other process (old pigpiod, another
   instance of this app) is holding the GPIO lines.

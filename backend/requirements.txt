@@ -2,6 +2,9 @@ fastapi==0.115.6
 uvicorn[standard]==0.34.0
 httpx==0.28.1
 gpiozero==2.0.1
-# lgpio only builds/installs on Raspberry Pi (ARM Linux); this marker keeps
-# `pip install -r requirements.txt` working on a laptop with no GPIO.
-lgpio==0.2.2.0; platform_machine == "aarch64" or platform_machine == "armv7l"
+# lgpio (the Pi pin-factory backend) is intentionally NOT listed here.
+# It's a C extension with no prebuilt wheel on some Pi Python versions, which
+# forces pip to compile it (needs swig + build tools). Instead, on the Pi:
+#   sudo apt install -y python3-lgpio
+#   python -m venv --system-site-packages .venv
+# so the venv sees the apt-installed module directly. See README section 3.
