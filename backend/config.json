@@ -1,0 +1,42 @@
+{
+  "buttons": {
+    "1": { "label": "RUN",     "role": "launch" },
+    "2": { "label": "Approve", "role": "webhook", "webhook": "http://localhost:5678/webhook/approve" },
+    "3": { "label": "Stop",    "role": "webhook", "webhook": "http://localhost:5678/webhook/stop" },
+    "4": { "label": "NEXT",    "role": "next_screen" }
+  },
+  "encoder": { "type": "bare 3-pin, no push switch", "rotate": "move_selection" },
+  "screens": [
+    {
+      "name": "Agent",
+      "workflows": [
+        { "label": "Approve current step", "webhook": "http://localhost:5678/webhook/agent-approve" },
+        { "label": "Summarise session",    "webhook": "http://localhost:5678/webhook/agent-summary" }
+      ]
+    },
+    {
+      "name": "Hermes",
+      "workflows": [
+        { "label": "Hermes: daily digest", "webhook": "http://localhost:5678/webhook/hermes-digest" },
+        { "label": "Hermes: inbox triage", "webhook": "http://localhost:5678/webhook/hermes-inbox" },
+        { "label": "Hermes: PO extract",   "webhook": "http://localhost:5678/webhook/hermes-po" },
+        { "label": "Hermes: standup note", "webhook": "http://localhost:5678/webhook/hermes-standup" }
+      ]
+    },
+    {
+      "name": "n8n",
+      "workflows": [
+        { "label": "Email filtering", "webhook": "https://n8n.vihaanprtf.tech/webhook/gmail-auto-sort" },
+        { "label": "Workflow B", "webhook": "http://localhost:5678/webhook/workflow-b" }
+      ]
+    },
+    {
+      "name": "Tasks",
+      "workflows": [
+        { "label": "Dummy task 1", "webhook": "http://localhost:5678/webhook/tasks-dummy-1" },
+        { "label": "Dummy task 2", "webhook": "http://localhost:5678/webhook/tasks-dummy-2" },
+        { "label": "Dummy task 3", "webhook": "http://localhost:5678/webhook/tasks-dummy-3" }
+      ]
+    }
+  ]
+}

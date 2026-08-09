@@ -1,0 +1,14 @@
+[Unit]
+Description=Cockpit desk console backend
+After=network.target
+
+[Service]
+# EDIT these three paths/user before installing — see README section "Auto-start on boot".
+User=pi
+WorkingDirectory=/home/pi/cockpit/backend
+ExecStart=/home/pi/cockpit/backend/.venv/bin/python -m uvicorn main:app --host 0.0.0.0 --port 8000
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target
