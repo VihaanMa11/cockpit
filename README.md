@@ -107,6 +107,11 @@ python -m venv --system-site-packages .venv   # --system-site-packages lets the 
 source .venv/bin/activate
 pip install -r requirements.txt     # installs gpiozero + fastapi/uvicorn/httpx
 
+# Node.js is not preinstalled on Raspberry Pi OS — install it (skip if
+# `node --version` already prints v18+):
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+
 cd ../frontend
 npm install
 npm run build                     # or scp your laptop's prebuilt frontend/dist/ across instead
@@ -158,6 +163,11 @@ control. All GND legs share one common ground rail back to any Pi GND pin.
 
 ## 6. Troubleshooting
 
+- **`npm: command not found` on the Pi:** Node.js isn't preinstalled on
+  Raspberry Pi OS. Install it with `curl -fsSL
+  https://deb.nodesource.com/setup_20.x | sudo -E bash -` then `sudo apt
+  install -y nodejs` (as shown in section 3), then retry `npm install && npm
+  run build` in `frontend/`.
 - **Can't reach `http://<pi-ip>:8000` from your laptop:** confirm both
   devices are on the same WiFi, confirm the Pi's IP with `hostname -I`, and
   confirm the server log says `Uvicorn running on http://0.0.0.0:8000` (not
