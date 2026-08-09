@@ -85,8 +85,10 @@ Save the file and restart the backend (or just re-run RUN/Approve/Stop —
 **Option A — git:**
 
 ```bash
-git clone <your-repo-url> cockpit
+git clone https://github.com/VihaanMa11/cockpit.git
 ```
+
+(This is a private repo — on the Pi you'll need to authenticate, e.g. `gh auth login` first if you have the GitHub CLI installed, or clone over SSH with a deploy key.)
 
 **Option B — scp, from your laptop:**
 
