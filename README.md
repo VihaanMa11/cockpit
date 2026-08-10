@@ -135,11 +135,17 @@ sudo systemctl enable cockpit.service
 sudo systemctl start cockpit.service
 ```
 
-Before installing, open `backend/cockpit.service` and fix `User`,
-`WorkingDirectory`, and `ExecStart` if your username or install path differ
-from `pi` / `/home/pi/cockpit`.
+`cockpit.service` is already filled in for user `vihaan1106` at
+`/home/vihaan1106/cockpit`. If you ever move the project or use a different
+user, edit `User`, `WorkingDirectory`, and `ExecStart` in that file first.
 
 Check status/logs with `systemctl status cockpit` / `journalctl -u cockpit -f`.
+
+Once enabled, the dashboard comes up automatically on every boot/reboot — no
+more SSH-in-and-run-uvicorn. To stop relying on it temporarily (e.g. to run
+the backend manually in a foreground terminal for debugging), stop the
+service first so it doesn't fight over port 8000: `sudo systemctl stop
+cockpit.service`.
 
 ---
 
