@@ -4,6 +4,7 @@
 
 - Identified the pictured display as the MPI3501-style 480 × 320 SPI panel with ILI9486 display controller and XPT2046 touch controller; documented the vendor `LCD35-show` driver and first-boot sequence.
 - Reassigned the 5-way joystick away from the TFT's GPIO17/24/25 control lines to GPIO18/19/20/21/22, retaining buttons on GPIO5/6/13/16 and DHT22 on GPIO4.
+- Mapped the physical APPROVE button to run the selected workflow on the Agents screen.
 - Added `scripts/setup-pi.sh` to create the externally-managed-safe Python environment, build the UI, enable hardware mode, generate the correct systemd service for the current path/user, and launch Chromium kiosk at Cockpit Home after desktop login.
 - Documented the need for a stack-through header or GPIO breakout to reach the pins covered by the TFT, plus the exact BCM/physical pin table.
 

@@ -18,7 +18,7 @@
     "down": { "home": "none", "music": "volume_down", "agents": "select_next" },
     "press": { "home": "none", "music": "play_pause", "agents": "run_workflow" },
     "run": { "home": "none", "music": "play_pause", "agents": "run_workflow" },
-    "approve": { "home": "none", "music": "next_track", "agents": "none" },
+    "approve": { "home": "none", "music": "next_track", "agents": "run_workflow" },
     "stop": { "home": "none", "music": "previous_track", "agents": "none" },
     "voice": { "home": "none", "music": "none", "agents": "none" }
   },

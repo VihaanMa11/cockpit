@@ -67,6 +67,7 @@ GPIO initialization uses gpiozero with `LGPIOFactory`; if it fails, the app fall
 - `ui.wallpaper` points to an image URL. The bundled `/assets/wallpapers/default.svg` is the fallback; replace the file or set the config path to another file served from `assets/`. Home uses cover cropping and a readability overlay. A missing image leaves the built-in gradient underneath.
 - Add/edit entries under `workflows` with `label`, optional `description` and `category`, `webhook`, `method`, and optional timeout seconds. Workflow state is per list position and is broadcast live.
 - Change `input_mapping` to change per-screen actions without editing code. `buttons` and `joystick.pins` hold GPIO pins and event names. `ui.clock_24h` selects 24-hour or locale 12-hour time; `music.auto_open` controls the once-per-play transition.
+- On Agents, joystick press, RUN, and APPROVE all run the selected workflow; left/right changes screens and up/down changes the selected workflow.
 - Keep webhook URLs and tokens in `config.json` or an environment file; never put credentials in source code. Do not commit real secrets.
 
 ## Music and Bluetooth
