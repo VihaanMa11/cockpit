@@ -195,3 +195,37 @@ button { font:inherit; -webkit-tap-highlight-color:transparent; touch-action:man
   .hints { min-height:34px; font-size:8px; }
   .touch-run { min-height:25px; padding:0 6px; font-size:8px; }
 }
+
+/* Music polish: full-surface artwork, non-overlapping timecodes and TFT-friendly controls. */
+.music-hero { grid-template-columns: clamp(112px, 24vw, 260px) minmax(0, 1fr); }
+.disc-wrap { justify-self: start; margin-left: -4px; }
+.disc { position: relative; overflow: hidden; background: #080d0f; }
+.disc-art { position: absolute; inset: 0; z-index: 0; width: auto; height: auto; overflow: hidden; border: 0; border-radius: 50%; background: radial-gradient(circle at 35% 28%, #16312e, #061113 72%); box-shadow: none; }
+.disc-art img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.generic-art { width: 100%; height: 100%; gap: 5px; font-size: clamp(8px, 1.2vw, 12px); }
+.disc::before { z-index: 1; pointer-events: none; border: 0; background: repeating-radial-gradient(circle at 50% 50%, transparent 0 4px, #e8fff016 4.5px 5px, #02060820 5.5px 9px); box-shadow: inset 0 0 0 1px #d7fff03b, inset 0 0 24px #0009; }
+.disc-hole { z-index: 2; }
+.music-progress { width: 100%; min-width: 0; flex: none; }
+.music-screen .time-row { display: flex; justify-content: space-between; gap: 12px; width: 100%; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.music-screen .time-row span { min-width: 5ch; }
+.music-screen .time-row span:last-child { text-align: right; }
+.volume-track { min-width: 40px; }
+.volume-track:focus-visible { outline: 2px solid var(--accent-bright); outline-offset: 5px; }
+.volume-track i { transition: width .12s ease; }
+@media (max-width: 600px) {
+  .music-hero { grid-template-columns: clamp(104px, 28vw, 134px) minmax(0, 1fr); gap: clamp(8px, 2vw, 12px); }
+  .disc-wrap { width: min(100%, clamp(104px, 28vw, 134px)); margin-left: -3px; }
+  .music-controls { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .volume-control { min-height: 34px; padding-inline: 12px; }
+  .volume-control b { min-width: 4ch; text-align: right; }
+  .transport { grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .transport button { height: 38px; }
+  .transport .primary-transport { width: 44px; height: 44px; }
+}
+@media (max-width: 370px) {
+  .music-hero { grid-template-columns: 92px minmax(0, 1fr); }
+  .disc-wrap { width: 90px; }
+  .music-screen .time-row { font-size: 9px; }
+  .music-controls { grid-template-columns: minmax(0, 1fr); }
+}
+
