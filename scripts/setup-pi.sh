@@ -19,7 +19,7 @@ case "$OS_CODENAME" in
   trixie)
     # Raspberry Pi OS 13 split the desktop into these Wayland meta-packages.
     GUI_PACKAGES=(rpd-wayland-core rpd-theme)
-    BOOT_MODE="B2"
+    BOOT_MODE="B4"
     ;;
   bookworm)
     GUI_PACKAGES=(raspberrypi-ui-mods lightdm)
@@ -88,6 +88,19 @@ if [[ -z "$CHROMIUM" ]]; then
 fi
 
 PI_UID="$(id -u "$PI_USER")"
+TFT_FB=""
+for fb_path in /sys/class/graphics/fb*; do
+  [[ -r "$fb_path/name" ]] || continue
+  if grep -qi 'ili9486' "$fb_path/name"; then
+    TFT_FB="/dev/${fb_path##*/}"
+    break
+  fi
+done
+if [[ -z "$TFT_FB" ]]; then
+  echo "Could not find the ILI9486 TFT framebuffer. Check that the TFT overlay is enabled and rebooted." >&2
+  exit 1
+fi
+
 mkdir -p "$PI_HOME/.local/bin" "$PI_HOME/.config/labwc" "$PI_HOME/.config/lxsession/LXDE-pi" /etc/X11
 cat > "$PI_HOME/.local/bin/cockpit-tft-kiosk" <<EOF
 #!/bin/sh
@@ -109,17 +122,17 @@ done
 
 # GoodTFT's older login profile starts a separate X session on every shell login.
 # Preserve a backup, then let the dedicated systemd service own the TFT X server.
-if [[ -f "$PI_HOME/.bash_profile" ]] && grep -Eq 'startx|FRAMEBUFFER=/dev/fb1' "$PI_HOME/.bash_profile"; then
+if [[ -f "$PI_HOME/.bash_profile" ]] && grep -Eq 'startx|FRAMEBUFFER=/dev/fb[0-9]+' "$PI_HOME/.bash_profile"; then
   sudo cp -n "$PI_HOME/.bash_profile" "$PI_HOME/.bash_profile.lcd-show-backup"
-  sudo sed -i -e '/startx/d' -e '/FRAMEBUFFER=\/dev\/fb1/d' "$PI_HOME/.bash_profile"
+  sudo sed -i -E -e '/startx/d' -e '/FRAMEBUFFER=\/dev\/fb[0-9]+/d' "$PI_HOME/.bash_profile"
   sudo chown "$PI_USER":"$(id -gn "$PI_USER")" "$PI_HOME/.bash_profile"
 fi
 
-sudo tee /etc/X11/xorg-cockpit-tft.conf >/dev/null <<'EOF'
+sudo tee /etc/X11/xorg-cockpit-tft.conf >/dev/null <<EOF
 Section "Device"
     Identifier "CockpitTFT"
     Driver "fbdev"
-    Option "fbdev" "/dev/fb1"
+    Option "fbdev" "$TFT_FB"
 EndSection
 
 Section "Screen"
@@ -148,14 +161,14 @@ SupplementaryGroups=video input
 PAMName=login
 WorkingDirectory=$BACKEND
 Environment=HOME=$PI_HOME
-Environment=FRAMEBUFFER=/dev/fb1
+Environment=FRAMEBUFFER=$TFT_FB
 Environment=XDG_RUNTIME_DIR=/run/user/$PI_UID
 TTYPath=/dev/tty8
 StandardInput=tty
 TTYReset=yes
 TTYVHangup=yes
 TTYVTDisallocate=no
-ExecStartPre=/usr/bin/test -e /dev/fb1
+ExecStartPre=/usr/bin/test -e $TFT_FB
 ExecStart=/usr/bin/xinit $PI_HOME/.local/bin/cockpit-tft-kiosk -- :1 vt8 -keeptty -novtswitch -config /etc/X11/xorg-cockpit-tft.conf
 Restart=on-failure
 RestartSec=3
@@ -180,7 +193,7 @@ sudo systemctl enable cockpit-tft-kiosk.service
 sudo systemctl restart cockpit-tft-kiosk.service
 
 echo
-echo "The Raspberry Pi desktop stays on HDMI; Cockpit kiosk is assigned to /dev/fb1 (TFT)."
+echo "The Raspberry Pi desktop stays on HDMI; Cockpit kiosk is assigned to $TFT_FB (TFT)."
 echo "Reboot after confirming the TFT driver is installed: sudo reboot"
 echo "Check backend status with: sudo systemctl status cockpit --no-pager"
 echo "Check TFT kiosk status with: sudo systemctl status cockpit-tft-kiosk --no-pager"
