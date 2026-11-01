@@ -89,7 +89,7 @@ The app controls the active local MPRIS player through `playerctl`; it does not 
 
 ### Spotify playing on a Windows laptop
 
-The Pi cannot see the laptop's local Spotify MPRIS session. Use the companion package in `windows-companion/` to forward now-playing metadata and its Windows media-session artwork over your LAN; the Pi displays it through the existing WebSocket. This sends metadata and album art only, not audio. The bridge is preferred while it is connected and the backend falls back to the Pi's local MPRIS player after 12 seconds without updates.
+The Pi cannot see the laptop's local Spotify media session directly. Use the companion package in `windows-companion/` to forward now-playing metadata and album art over your LAN; the Pi displays it through the existing WebSocket. Cockpit play/pause and previous/next controls are returned to the Windows Spotify session. Volume controls adjust the laptop's Windows master volume. Audio continues playing on the laptop; it is not streamed to the Pi. The bridge is preferred while it is connected and the backend falls back to the Pi's local MPRIS player after 12 seconds without updates.
 
 1. On the Cockpit host, run this from `backend/` to create the private shared token, then restart Cockpit:
    - Linux/Pi: `python -c "import secrets,pathlib; pathlib.Path('companion_token.txt').write_text(secrets.token_urlsafe(32))"`
@@ -98,7 +98,7 @@ The Pi cannot see the laptop's local Spotify MPRIS session. Use the companion pa
 3. Extract `windows-companion/Cockpit-Spotify-Bridge-Windows.zip` on the laptop and launch `Start-Cockpit-Spotify-Bridge.bat`. It creates a local Python environment and installs the required Windows media-session bindings. Python 3.11+ is required; install it from [python.org](https://www.python.org/downloads/windows/) if needed.
 4. Enter the Pi's LAN URL (for example `http://192.168.1.25:8000`) and paste the token at the prompt. Open Spotify and play a track; leave the bridge window running. Its config is stored in `%APPDATA%\CockpitMusicBridge\config.json`.
 
-Keep the Pi and laptop on a trusted LAN and allow inbound TCP port 8000 from the laptop. The bridge endpoint requires the shared token. The Music controls continue to target the Pi-local player; forwarding remote playback controls to the laptop is not part of this metadata bridge.
+Keep the Pi and laptop on a trusted LAN and allow inbound TCP port 8000 from the laptop. The bridge endpoints require the shared token. The Windows bridge must remain running for metadata and remote controls to work. Windows volume percentage is not reported to Cockpit.
 
 ## Pi setup checklist
 

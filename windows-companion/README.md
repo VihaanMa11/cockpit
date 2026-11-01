@@ -1,13 +1,13 @@
 # Cockpit Spotify Bridge for Windows
 
-This helper reads the **Spotify desktop app's** Windows media session and sends the current title, artist, album, playback state, progress and album-art thumbnail to a Cockpit backend on your local network. It does not stream or change the audio. Windows 10 (1809+) or Windows 11 and Python 3.11+ are required.
+This helper reads the **Spotify desktop app's** Windows media session and sends the current title, artist, album, playback state, progress and album-art thumbnail to a Cockpit backend on your local network. Cockpit play/pause and previous/next commands are sent back to Spotify; volume commands adjust the laptop's Windows master volume. It does not stream or change the audio route. Windows 10 (1809+) or Windows 11 and Python 3.11+ are required.
 
 ## First run
 
 1. Extract this ZIP to a normal folder, such as `Documents\Cockpit-Spotify-Bridge`.
 2. Double-click `Start-Cockpit-Spotify-Bridge.bat`. It installs the small Windows Runtime Python bindings into a private `.venv` in this folder.
 3. When asked, enter the Cockpit server URL (for example, `http://192.168.1.25:8000`) and the bridge token created on the Cockpit server. The token is stored in your `%APPDATA%\CockpitMusicBridge\config.json` file.
-4. Open Spotify on this laptop and start a song. Leave the black console window running while you want track details sent to Cockpit. Press Ctrl+C to stop it.
+4. Open the Spotify desktop app on this laptop and start a song. Cockpit's Music page should show its track details and artwork. Use the Pi's touchscreen or controls for play/pause, previous/next, and volume. Leave the bridge console window running; press Ctrl+C to stop it.
 
 To find the Pi address, run `hostname -I` on the Pi. Do not use `localhost` unless Cockpit itself is running on the same Windows laptop.
 
@@ -21,7 +21,7 @@ python -c "import secrets,pathlib; pathlib.Path('companion_token.txt').write_tex
 
 Keep that file private; it is ignored by Git. Copy its contents and paste it into the bridge prompt. Restart Cockpit after creating the token. The helper sends it only in the `X-Cockpit-Token` header. Keep both devices on a trusted local network and allow inbound TCP port 8000 from your laptop in the Pi firewall.
 
-The existing Music UI will switch to Spotify data while the bridge is connected, then fall back to the Cockpit host's local player after the bridge goes away. Album artwork is cached on the Cockpit host, not linked to a temporary Windows thumbnail stream.
+The existing Music UI will switch to Spotify data while the bridge is connected, then fall back to the Cockpit host's local player after the bridge goes away. Album artwork is cached on the Cockpit host, not linked to a temporary Windows thumbnail stream. Windows does not report the volume percentage through this bridge, but volume-up/down commands change the laptop's system volume.
 
 ## Troubleshooting
 

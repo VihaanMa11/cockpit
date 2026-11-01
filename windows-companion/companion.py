@@ -2,6 +2,7 @@
 # Run on the laptop; the Pi-hosted Cockpit displays the data over its existing WebSocket.
 import asyncio
 import base64
+import ctypes
 import getpass
 import hashlib
 import json
@@ -132,6 +133,47 @@ def publish(config, payload):
         return response.status
 
 
+def fetch_commands(config):
+    request = urllib.request.Request(
+        config["server_url"] + "/api/music/companion/commands",
+        headers={"X-Cockpit-Token": config["token"]},
+        method="GET",
+    )
+    with urllib.request.urlopen(request, timeout=5) as response:
+        return json.loads(response.read().decode("utf-8")).get("commands", [])
+
+
+def adjust_windows_volume(direction):
+    # The Windows media volume keys adjust the laptop's master output volume.
+    key = 0xAF if direction == "up" else 0xAE
+    keyup = 0x0002
+    ctypes.windll.user32.keybd_event(key, 0, 0, 0)
+    ctypes.windll.user32.keybd_event(key, 0, keyup, 0)
+
+
+async def apply_commands(session, commands):
+    actions = {
+        "play_pause": "try_toggle_play_pause_async",
+        "next_track": "try_skip_next_async",
+        "previous_track": "try_skip_previous_async",
+    }
+    for command in commands:
+        action = command.get("action")
+        try:
+            if action in actions and session is not None:
+                success = await getattr(session, actions[action])()
+                if not success:
+                    log.warning("Windows did not accept Spotify command: %s", action)
+            elif action == "volume_up":
+                adjust_windows_volume("up")
+            elif action == "volume_down":
+                adjust_windows_volume("down")
+            else:
+                log.warning("Cannot apply Spotify command without a Spotify session: %s", action)
+        except Exception:
+            log.exception("Could not apply Spotify command: %s", action)
+
+
 async def run():
     config = load_config()
     manager = await SessionManager.request_async()
@@ -148,6 +190,19 @@ async def run():
                     "title": "", "artist": "", "album": "", "duration": 0, "elapsed": 0,
                     "artwork_b64": None, "artwork_mime": None, "artwork_hash": "",
                 }
+            try:
+                commands = fetch_commands(config)
+                session = next((s for s in manager.get_sessions()
+                                if "spotify" in str(s.source_app_user_model_id or "").casefold()), None)
+                await apply_commands(session, commands)
+            except urllib.error.HTTPError as exc:
+                if time.monotonic() - last_warning > 20:
+                    log.warning("Cockpit command endpoint returned HTTP %s.", exc.code)
+                    last_warning = time.monotonic()
+            except (OSError, TimeoutError) as exc:
+                if time.monotonic() - last_warning > 20:
+                    log.warning("Cannot reach Cockpit command endpoint (%s). Retrying.", exc)
+                    last_warning = time.monotonic()
             signature = tuple(payload.get(key) for key in ("active", "status", "title", "artist", "album", "duration", "artwork_hash"))
             # Send progress every ~1.5 seconds; attach image bytes only when the image changes.
             if signature == previous_signature:

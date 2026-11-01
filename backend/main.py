@@ -33,7 +33,7 @@ state = {
     "workflows": [{"status": "idle", "last_run": None, "error": None} for _ in workflows],
     "music": {}, "sensors": {}, "events": [],
 }
-remote_music = {"state": None, "updated_at": 0.0, "artwork_hash": None, "art_url": None}
+remote_music = {"state": None, "updated_at": 0.0, "artwork_hash": None, "art_url": None, "commands": []}
 COMPANION_TOKEN_PATH = BASE_DIR / "companion_token.txt"
 
 
@@ -127,7 +127,16 @@ async def dispatch_action(action):
         if workflows:
             asyncio.create_task(run_workflow(state["selection_index"] % len(workflows)))
     elif action in {"play_pause", "next_track", "previous_track", "volume_up", "volume_down"}:
-        await music.act(action)
+        remote_is_live = (
+            state.get("music", {}).get("source") == "spotify-windows"
+            and state.get("music", {}).get("active")
+            and time.monotonic() - remote_music["updated_at"] < 12
+        )
+        if remote_is_live:
+            remote_music["commands"].append({"id": time.time_ns(), "action": action})
+            remote_music["commands"] = remote_music["commands"][-32:]
+        else:
+            await music.act(action)
     await broadcast()
 
 
@@ -315,6 +324,19 @@ async def companion_music(request: Request):
         state["screen_index"] = 1
     await broadcast()
     return {"ok": True}
+
+
+@app.get("/api/music/companion/commands")
+async def companion_music_commands(request: Request):
+    expected = companion_token()
+    supplied = request.headers.get("x-cockpit-token", "")
+    if not expected:
+        raise HTTPException(status_code=503, detail="Laptop music bridge is not configured on this Cockpit server")
+    if not hmac.compare_digest(expected, supplied):
+        raise HTTPException(status_code=401, detail="Invalid Cockpit companion token")
+    commands = remote_music["commands"]
+    remote_music["commands"] = []
+    return {"commands": commands}
 
 
 @app.post("/api/dev/event/{event}")
