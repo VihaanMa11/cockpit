@@ -1,5 +1,11 @@
 # Changelog
 
+## Local TFT touch controls
+
+- Made the three bottom screen indicators tappable, workflows selectable by touch, and added a visible Run Selected control; music transport and volume use the same touch path as keyboard actions.
+- Added local-kiosk-only control APIs, restricted to loopback clients with matching localhost origins so remote LAN browsers cannot invoke workflow webhooks.
+- Documented the MPI3501 landscape reset command and the two-stage Pi then Spotify bridge setup.
+
 ## Raspberry Pi OS Trixie desktop boot fix
 
 - Fixed the Pi setup flow for Raspberry Pi OS Lite: it now installs the Trixie Wayland desktop packages (or Bookworm desktop packages), selects the release-appropriate desktop boot mode, and enables graphical startup before installing kiosk autostart.

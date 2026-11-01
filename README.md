@@ -1,6 +1,6 @@
 # Cockpit v2
 
-Cockpit v2 is a React/Vite desk console served by FastAPI. Its responsive 3:2 layout fills the 480 × 320 landscape area of the MPI3501-style 3.5-inch SPI TFT and scales up to a 960 × 640 canvas on larger laptop windows. It supports keyboard and configured GPIO controls; the TFT's touch driver is configured separately by the Pi display setup.
+Cockpit v2 is a React/Vite desk console served by FastAPI. Its responsive 3:2 layout fills the 480 × 320 landscape area of the MPI3501-style 3.5-inch SPI TFT and scales up to a 960 × 640 canvas on larger laptop windows. It supports keyboard, configured GPIO, and touchscreen controls in the Pi's local kiosk.
 
 ## Laptop mock mode
 
@@ -48,13 +48,15 @@ After the Pi reboots and the screen shows the Raspberry Pi desktop, clone/pull C
 
 ```sh
 cd ~/cockpit/cockpitv2
-git pull origin master
+git pull --ff-only origin master
 chmod +x scripts/setup-pi.sh
 ./scripts/setup-pi.sh
 sudo reboot
 ```
 
-The included script configures the app and kiosk startup; the vendor display driver is a separate prerequisite. After both are installed, power-on should load the desktop session and Chromium kiosk into Cockpit Home. A TFT connected before its driver is installed can remain white; Cockpit code alone cannot initialize the panel controller. The vendor driver initializes the touch device and its calibration/orientation may need adjustment. Cockpit screen changes and workflow approval currently use the joystick/buttons; touch-to-action support is not enabled yet.
+The included script installs a graphical desktop if needed, builds the app, and configures Chromium kiosk to open Cockpit Home. The vendor display driver is a separate prerequisite; Cockpit code alone cannot initialize the panel controller. For the MPI3501's normal landscape orientation, run `cd ~/LCD-show && sudo ./rotate.sh 0` after the driver is installed; this restores the driver's default 90° landscape position and matching touch calibration. The `rotate.sh` values are relative to the driver's starting orientation. If `rotate.sh 0` does not give landscape on your board, stop and check the active `dtoverlay` line before trying other rotations.
+
+Touchscreen taps work in the local kiosk: tap the bottom screen indicators to navigate, tap a workflow row to select it, and use `RUN SELECTED` to trigger it. Local touch actions are accepted only from the Pi itself at `127.0.0.1:8000`, with a matching same-origin request. A browser opened from another computer can view Cockpit, but it cannot trigger local kiosk actions. Physical joystick and buttons continue to work independently.
 
 ### Python environment
 
@@ -67,6 +69,7 @@ GPIO initialization uses gpiozero with `LGPIOFactory`; if it fails, the app fall
 - `ui.wallpaper` points to an image URL. The bundled `/assets/wallpapers/default.svg` is the fallback; replace the file or set the config path to another file served from `assets/`. Home uses cover cropping and a readability overlay. A missing image leaves the built-in gradient underneath.
 - Add/edit entries under `workflows` with `label`, optional `description` and `category`, `webhook`, `method`, and optional timeout seconds. Workflow state is per list position and is broadcast live.
 - Change `input_mapping` to change per-screen actions without editing code. `buttons` and `joystick.pins` hold GPIO pins and event names. `ui.clock_24h` selects 24-hour or locale 12-hour time; `music.auto_open` controls the once-per-play transition.
+- On the touch screen, tap a bottom indicator to switch Home/Music/Agents, tap a workflow to select it, then tap `RUN SELECTED`; Music transport and volume controls are also tappable.
 - On Agents, joystick press, RUN, and APPROVE all run the selected workflow; left/right changes screens and up/down changes the selected workflow.
 - Keep webhook URLs and tokens in `config.json` or an environment file; never put credentials in source code. Do not commit real secrets.
 

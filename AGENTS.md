@@ -11,6 +11,7 @@
 ## Conventions
 
 - Keep hardware integrations behind backend adapters and emit the common configured input events.
+- Touch UI control requests must be same-origin loopback only; never expose workflow-triggering control routes to LAN clients.
 - Keep screen content and physical pin/mapping choices in `backend/config.json`; do not put webhook secrets in source code.
 - MPI3501 display/touch occupies BCM GPIO7–11, 17, 24, and 25. Keep joystick on BCM 18/19/20/21/22, buttons on 5/6/13/16, and DHT22 data on GPIO4. A stack-through header or GPIO breakout is required to reach pins covered by the display.
 - Keep existing backend capabilities available even when the current UI does not expose them.

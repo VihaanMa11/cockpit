@@ -82,6 +82,17 @@ body { min-height: 100dvh; overflow: hidden; background: radial-gradient(ellipse
 }
 @media(max-width:370px){.clock{font-size:clamp(54px,14.5vw,62px)}.ambient-card{flex-basis:78px;padding:5px}.date{font-size:10px}.stat .glyph{width:17px;height:17px}.stat{column-gap:3px;padding-inline:3px}}
 
+/* Touch-first hit targets for the Pi's local kiosk. */
+button { font:inherit; -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
+.dots { flex-basis:28px; gap:0; }
+.dots .dot,.dots .dot.active { display:grid; width:40px; height:28px; place-items:center; padding:0; border:0; border-radius:0; background:transparent; box-shadow:none; cursor:pointer; }
+.dots .dot::after { width:7px; height:7px; content:""; border-radius:99px; background:#44534e; transition:width .2s ease,background .2s ease,box-shadow .2s ease; }
+.dots .dot.active::after { width:18px; height:6px; background:var(--accent); box-shadow:0 0 10px #79f4ce70; }
+.agent-row { width:100%; color:inherit; font:inherit; text-align:left; cursor:pointer; -webkit-appearance:none; appearance:none; }
+.agent-row:focus-visible,.dots .dot:focus-visible,.touch-run:focus-visible { outline:2px solid var(--accent-bright); outline-offset:2px; }
+.touch-run { flex:none; min-height:28px; padding:0 9px; border:1px solid #baff727a; border-radius:7px; background:linear-gradient(100deg,#234126,#14221c); color:#d6ff91; font:800 clamp(8px,1vw,11px)/1 var(--mono); letter-spacing:.04em; cursor:pointer; }
+.touch-run:disabled { opacity:.45; cursor:not-allowed; }
+
 /* Music: a tactile turntable with a live progress halo. */
 .music-screen { position:relative;display:flex;flex-direction:column;justify-content:space-between;gap:clamp(7px,1.4vw,14px);padding:clamp(38px,6vw,58px) clamp(12px,2.6vw,28px) clamp(10px,2vw,20px);overflow:hidden;background:radial-gradient(ellipse at 23% 43%,#062322 0%,#071518 34%,#050d12 75%),#050d12; }
 .music-screen::before { position:absolute;inset:-40%;content:"";pointer-events:none;opacity:.23;background:repeating-radial-gradient(ellipse at 22% 44%,transparent 0 22px,#1b78551c 23px 24px,#07100f00 25px 42px);mask-image:linear-gradient(90deg,#000,transparent 72%); }

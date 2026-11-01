@@ -6,7 +6,21 @@ const pad = (n) => String(n).padStart(2, "0");
 const formatTime = (seconds = 0) => `${Math.floor(seconds / 60)}:${pad(Math.floor(seconds % 60))}`;
 
 function sendEvent(event) {
-  fetch(`/api/dev/event/${event}`, { method: "POST" }).catch(() => {});
+  const localKiosk = ["127.0.0.1", "localhost"].includes(window.location.hostname) && window.location.port === "8000";
+  const prefix = localKiosk ? "/api/local/event" : "/api/dev/event";
+  fetch(`${prefix}/${event}`, { method: "POST" }).catch(() => {});
+}
+
+function setScreen(index) {
+  const localKiosk = ["127.0.0.1", "localhost"].includes(window.location.hostname) && window.location.port === "8000";
+  const prefix = localKiosk ? "/api/local/screen" : "/api/dev/screen";
+  fetch(`${prefix}/${index}`, { method: "POST" }).catch(() => {});
+}
+
+function selectWorkflow(index) {
+  const localKiosk = ["127.0.0.1", "localhost"].includes(window.location.hostname) && window.location.port === "8000";
+  const prefix = localKiosk ? "/api/local/select" : "/api/dev/select";
+  fetch(`${prefix}/${index}`, { method: "POST" }).catch(() => {});
 }
 
 function Hints({ children }) {
@@ -14,7 +28,7 @@ function Hints({ children }) {
 }
 
 function Dots({ active }) {
-  return <div className="dots" aria-label={`Screen ${active + 1} of 3`}>{SCREEN_NAMES.map((name, i) => <span key={name} className={i === active ? "dot active" : "dot"} />)}</div>;
+  return <nav className="dots" aria-label="Cockpit screens">{SCREEN_NAMES.map((name, i) => <button key={name} type="button" className={i === active ? "dot active" : "dot"} aria-label={`Show ${name}`} aria-current={i === active ? "page" : undefined} onClick={() => setScreen(i)} />)}</nav>;
 }
 
 function Glyph({ name, size = 20 }) {
@@ -138,7 +152,7 @@ function MusicScreen({ music }) {
   </section>;
 }
 
-function Agents({ workflows = [], states = [], selection = 0 }) {
+function Agents({ workflows = [], states = [], selection = 0, onSelect }) {
   const selected = workflows[selection];
   const [wide, setWide] = useState(() => window.innerWidth >= 850);
   useEffect(() => {
@@ -156,13 +170,13 @@ function Agents({ workflows = [], states = [], selection = 0 }) {
     <div className="screen-title"><span>n8n AGENTS</span><span>{workflows.length} FLOWS</span></div>
     <div className="agent-list">{rows.map(({ workflow, i }) => {
       const status = states[i] || { status: "idle" };
-      return <div key={`${workflow.label}-${i}`} className={`agent-row ${i === selection ? "selected" : ""}`}>
+      return <button key={`${workflow.label}-${i}`} type="button" className={`agent-row ${i === selection ? "selected" : ""}`} aria-pressed={i === selection} onClick={() => onSelect(i)}>
         <span className={`status-dot ${status.status}`} />
         <div className="agent-copy"><b>{workflow.label}</b><small>{workflow.category || "WORKFLOW"}{workflow.description ? ` · ${workflow.description}` : ""}{status.last_run ? ` · ${new Date(status.last_run * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : ""}</small></div>
         <span className={`agent-state ${status.status}`}>{status.status === "success" ? "OK" : status.status === "failed" ? "FAIL" : status.status === "running" ? "RUN…" : "IDLE"}</span>
-      </div>;
+      </button>;
     })}{!workflows.length && <div className="empty-list">No workflows configured</div>}</div>
-    <Hints><span>◀ / ▶ SCREEN</span><span>↑ / ↓ SELECT</span><span>ENTER RUN</span></Hints>
+    <Hints><span>◀ / ▶ SCREEN</span><span>↑ / ↓ SELECT</span><button type="button" className="touch-run" onClick={() => sendEvent("approve")} disabled={!selected}>RUN SELECTED</button></Hints>
   </section>;
 }
 
@@ -196,7 +210,7 @@ export default function App() {
     <div className="viewport" key={screen}>
       {screen === 0 && <Home config={config} sensors={state.sensors || {}} />}
       {screen === 1 && <MusicScreen music={state.music || {}} />}
-      {screen === 2 && <Agents workflows={workflows} states={state.workflows} selection={state.selection_index || 0} />}
+      {screen === 2 && <Agents workflows={workflows} states={state.workflows} selection={state.selection_index || 0} onSelect={selectWorkflow} />}
     </div>
     <Dots active={screen} />
   </main>;

@@ -3,6 +3,7 @@ import asyncio
 import base64
 import hashlib
 import hmac
+import ipaddress
 import json
 import logging
 import os
@@ -179,6 +180,20 @@ async def lifespan(app):
 app = FastAPI(lifespan=lifespan)
 
 
+def require_local_kiosk(request: Request):
+    """Allow UI actions only from the Pi's own same-origin kiosk browser."""
+    peer = request.client.host if request.client else ""
+    try:
+        is_loopback = ipaddress.ip_address(peer).is_loopback
+    except ValueError:
+        is_loopback = False
+    allowed_origins = {"http://127.0.0.1:8000", "http://localhost:8000"}
+    origin = request.headers.get("origin", "")
+    host = request.headers.get("host", "")
+    if not is_loopback or origin not in allowed_origins or host not in {"127.0.0.1:8000", "localhost:8000"}:
+        raise HTTPException(status_code=403, detail="Local Cockpit kiosk controls only")
+
+
 @app.websocket("/ws")
 async def websocket_endpoint(ws: WebSocket):
     await manager.connect(ws)
@@ -197,6 +212,36 @@ async def get_config():
 @app.get("/api/health")
 async def get_health():
     return {"status": "ok", "mode": state["mode"]}
+
+
+@app.post("/api/local/event/{event}")
+async def local_kiosk_event(event: str, request: Request):
+    require_local_kiosk(request)
+    if event not in EVENTS:
+        raise HTTPException(status_code=400, detail="unknown input event")
+    await handle_input(event)
+    return {"ok": True}
+
+
+@app.post("/api/local/screen/{screen_index}")
+async def local_kiosk_screen(screen_index: int, request: Request):
+    require_local_kiosk(request)
+    if screen_index not in (0, 1, 2):
+        raise HTTPException(status_code=400, detail="screen index must be 0, 1, or 2")
+    state["screen_index"] = screen_index
+    state["selection_index"] = 0
+    await broadcast()
+    return {"ok": True}
+
+
+@app.post("/api/local/select/{workflow_index}")
+async def local_kiosk_select(workflow_index: int, request: Request):
+    require_local_kiosk(request)
+    if workflow_index < 0 or workflow_index >= len(workflows):
+        raise HTTPException(status_code=400, detail="unknown workflow index")
+    state["selection_index"] = workflow_index
+    await broadcast()
+    return {"ok": True}
 
 
 @app.post("/api/music/companion")
@@ -279,6 +324,29 @@ async def dev_event(event: str):
     if event not in EVENTS:
         raise HTTPException(status_code=400, detail="unknown input event")
     await hardware.mock_event(event)
+    return {"ok": True}
+
+
+@app.post("/api/dev/screen/{screen_index}")
+async def dev_screen(screen_index: int):
+    if state["mode"] != "mock":
+        raise HTTPException(status_code=403, detail="mock controls only")
+    if screen_index not in (0, 1, 2):
+        raise HTTPException(status_code=400, detail="screen index must be 0, 1, or 2")
+    state["screen_index"] = screen_index
+    state["selection_index"] = 0
+    await broadcast()
+    return {"ok": True}
+
+
+@app.post("/api/dev/select/{workflow_index}")
+async def dev_select(workflow_index: int):
+    if state["mode"] != "mock":
+        raise HTTPException(status_code=403, detail="mock controls only")
+    if workflow_index < 0 or workflow_index >= len(workflows):
+        raise HTTPException(status_code=400, detail="unknown workflow index")
+    state["selection_index"] = workflow_index
+    await broadcast()
     return {"ok": True}
 
 

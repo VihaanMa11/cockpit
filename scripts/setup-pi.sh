@@ -30,7 +30,7 @@ case "$OS_CODENAME" in
     exit 1
     ;;
 esac
-sudo apt install -y python3-full python3-venv python3-lgpio nodejs npm chromium "${GUI_PACKAGES[@]}"
+sudo apt install -y python3-full python3-venv python3-lgpio nodejs npm chromium playerctl pulseaudio-utils "${GUI_PACKAGES[@]}"
 
 python3 -m venv --system-site-packages "$BACKEND/.venv"
 "$BACKEND/.venv/bin/python" -m pip install --upgrade pip
@@ -106,7 +106,8 @@ fi
 sudo systemctl enable lightdm || true
 
 sudo systemctl daemon-reload
-sudo systemctl enable --now cockpit
+sudo systemctl enable cockpit
+sudo systemctl restart cockpit
 
 echo
 echo "Cockpit is installed and will start at http://127.0.0.1:8000/ after desktop login."
