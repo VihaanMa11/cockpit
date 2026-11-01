@@ -4,7 +4,9 @@
 
 - Made the three bottom screen indicators tappable, workflows selectable by touch, and added a visible Run Selected control; music transport and volume use the same touch path as keyboard actions.
 - Added local-kiosk-only control APIs, restricted to loopback clients with matching localhost origins so remote LAN browsers cannot invoke workflow webhooks.
-- Documented the MPI3501 landscape reset command and the two-stage Pi then Spotify bridge setup.
+- Added a portrait reflow for the 320 × 480 TFT orientation, including a scrollable Agents list and compact Music controls.
+- Added playerctl and PulseAudio volume utilities to the Pi setup and made setup restart the running backend after updates.
+- Documented MPI3501 portrait/landscape rotation commands and the two-stage Pi then Spotify bridge setup.
 
 ## Raspberry Pi OS Trixie desktop boot fix
 

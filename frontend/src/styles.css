@@ -149,3 +149,49 @@ button { font:inherit; -webkit-tap-highlight-color:transparent; touch-action:man
 }
 @media(max-width:370px){.music-screen{padding-inline:8px}.music-hero{grid-template-columns:98px minmax(0,1fr);gap:8px}.disc-wrap{width:98px}.now-playing{font-size:7px;padding-inline:6px}.track-title{font-size:19px}.artist{font-size:13px}.music-controls{grid-template-columns:minmax(0,.9fr) minmax(0,1.3fr);gap:5px}.volume-control{gap:4px;padding-inline:6px}.volume-control b{font-size:9px}.transport{gap:4px}}
 @media(prefers-reduced-motion:reduce){.disc-wrap.is-playing .disc{animation:none!important}.music-screen .progress>div{transition:none}}
+
+/* Keep all three screens legible when the 480 × 320 TFT is mounted portrait. */
+@media (orientation: portrait) {
+  html, body, #root { min-width:0; width:100%; height:100%; min-height:100%; }
+  #root { min-height:100dvh; }
+  .console { width:100vw; height:100dvh; max-width:none; aspect-ratio:auto; gap:6px; padding:8px; }
+  .topline { flex-basis:24px; }
+  .topline::after { left:38%; right:33%; }
+  .brand { font-size:14px; }
+  .brand-mark { width:20px; height:19px; }
+  .connection { font-size:8px; }
+  .viewport { min-height:0; }
+  .dots { flex-basis:28px; }
+  .home { gap:8px; padding:10px; }
+  .home-main { flex-direction:column; justify-content:center; align-items:stretch; gap:8px; }
+  .clock-block { align-self:center; text-align:center; }
+  .clock { font-size:clamp(48px,18vw,62px); }
+  .date { justify-content:center; margin-top:7px; font-size:11px; }
+  .ambient-card { flex:0 0 70px; min-height:70px; flex-direction:row; gap:8px; padding:5px; border-radius:12px; }
+  .ambient-card>b { margin:0; font-size:20px; }
+  .ambient-card>small { display:none; }
+  .ambient-humidity { margin:0; }
+  .stats { grid-template-columns:repeat(2,minmax(0,1fr)); grid-auto-flow:row; min-height:0; gap:5px; }
+  .stat { min-height:39px; }
+  .home-caption { justify-content:center; }
+  .music-screen { display:flex; flex-direction:column; justify-content:space-between; gap:7px; padding:38px 9px 8px; }
+  .music-hero { flex:1; grid-template-columns:92px minmax(0,1fr); gap:8px; }
+  .disc-wrap { width:90px; }
+  .disc-art { width:38%; }
+  .now-playing { margin-bottom:6px; padding:4px 7px; font-size:7px; }
+  .track-title { font-size:16px; }
+  .artist { margin-top:4px; font-size:11px; }
+  .progress { margin-top:9px; }
+  .time-row { font-size:9px; }
+  .music-controls { grid-template-columns:1fr; gap:7px; }
+  .volume-control { min-height:35px; }
+  .transport { gap:12px; }
+  .transport button { height:38px; }
+  .transport .primary-transport { width:44px; height:44px; }
+  .agents-screen { padding:12px 9px 44px; }
+  .agent-list { flex:1; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; }
+  .agent-row { min-height:34px; }
+  .agent-copy small { font-size:9px; }
+  .hints { min-height:34px; font-size:8px; }
+  .touch-run { min-height:25px; padding:0 6px; font-size:8px; }
+}
