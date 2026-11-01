@@ -87,6 +87,8 @@ function Home({ config, sensors }) {
 
 function MusicScreen({ music }) {
   const playing = music.status === "playing";
+  const [artworkFailed, setArtworkFailed] = useState(false);
+  useEffect(() => { setArtworkFailed(false); }, [music.art_url]);
   const discRef = useRef(null);
   const angleRef = useRef(0);
   const frameRef = useRef(null);
@@ -141,7 +143,7 @@ function MusicScreen({ music }) {
   return <section className="screen music-screen">
     <div className="screen-title"><span>MUSIC</span><span className={playing ? "playing-label" : "idle-label"}>{playing ? "PLAYING" : music.active ? "PAUSED" : "NO PLAYER"}</span></div>
     <div className="music-hero">
-      <div className={`disc-wrap ${playing ? "is-playing" : ""}`}><div className="record-glow"/><div ref={discRef} className="disc"><div className="disc-art">{music.art_url ? <img src={music.art_url} alt="Album artwork" /> : <div className="generic-art"><Glyph name="mountain" size={34}/><span>COCKPIT</span></div>}</div><div className="disc-hole" /></div></div>
+      <div className={`disc-wrap ${playing ? "is-playing" : ""}`}><div className="record-glow"/><div ref={discRef} className="disc"><div className="disc-art">{music.art_url && !artworkFailed ? <img key={music.art_url} src={music.art_url} alt="Album artwork" decoding="async" onError={() => setArtworkFailed(true)} /> : <div className="generic-art"><Glyph name="mountain" size={34}/><span>{artworkFailed ? "ART UNAVAILABLE" : "COCKPIT"}</span></div>}</div><div className="disc-hole" /></div></div>
       <div className="track-info">
         <div className={`now-playing ${playing ? "live" : ""}`}><Glyph name="bars" size={19}/><span>{playing ? "NOW PLAYING" : music.active ? "ON PAUSE" : "READY WHEN YOU ARE"}</span></div>
         <div className="track-title">{music.active ? music.title : "Nothing playing"}</div>
