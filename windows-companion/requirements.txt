@@ -1,0 +1,2 @@
+winrt-Windows.Media.Control>=4!10.0.28000.0,<5!0
+winrt-Windows.Storage.Streams>=4!10.0.28000.0,<5!0

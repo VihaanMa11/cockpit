@@ -1,203 +1,68 @@
-# Cockpit — desk console dashboard
+# Cockpit v2
 
-A Raspberry Pi 4 reads 4 push buttons + 1 rotary encoder over GPIO and serves
-a live web dashboard (FastAPI + WebSocket backend, React frontend) at
-`http://<pi-ip>:8000`. Pressing a button launches a workflow (n8n / agent
-webhook); turning the encoder scrolls the on-screen selection. See
-`HARDWARE_SPEC.md` for the wiring and `MASTER_PROMPT.md` for the full spec.
+Cockpit v2 is a React/Vite desk console served by FastAPI. Its 3:2 layout fills the 480 × 320 landscape area of the 3.5-inch SPI TFT and scales up to a 960 × 640 canvas on larger laptop windows. Navigation is keyboard or GPIO only.
 
----
+## Laptop mock mode
 
-## 1. Laptop dev (mock mode, no hardware needed)
+1. Install Python 3.10+ and Node.js 18+.
+2. In `backend/`, create a virtual environment, activate it, and install `pip install -r requirements.txt`.
+3. In a second terminal, run `npm install` and `npm run dev` from `frontend/`.
+4. Start the API from `backend/` with `python -m uvicorn main:app --host 0.0.0.0 --port 8000`.
+5. Open the Vite URL (normally `http://localhost:5173`). For the production-style single port, run `npm run build` in `frontend/` and open `http://localhost:8000`.
 
-**Backend:**
+Mock mode is enabled by `mock_mode: true` in `backend/config.json`. Arrow keys navigate and select; Enter runs/plays; A and S change tracks; Up/Down change volume on Music. The `Demo` workflow category provides success, failure, and timeout examples. Mock calls never contact configured external webhook URLs. For scripted checks, mock inputs are available at `/api/dev/event/{left|right|up|down|press|run|approve|stop|voice}` and mock player actions at `/api/dev/music/{play|pause|next|previous|volume_up|volume_down}`.
 
-```bash
-cd backend
-python -m venv .venv
-# Windows:            .venv\Scripts\activate
-# macOS/Linux:         source .venv/bin/activate
-pip install -r requirements.txt
-```
+## Raspberry Pi
 
-**Frontend** (separate terminal):
+Use Raspberry Pi OS 64-bit with Python, Node, and the GPIO packages described in `backend/requirements.txt`. Install `playerctl` and a working PipeWire (`wpctl`) or PulseAudio (`pactl`) audio server. Build the UI with `npm run build` in `frontend/`; run the backend with `python -m uvicorn main:app --host 0.0.0.0 --port 8000` from `backend/`.
 
-```bash
-cd frontend
-npm install
-npm run build
-```
+Before enabling hardware, set `mock_mode` to `false` in `backend/config.json`. GPIO initialization uses gpiozero with `LGPIOFactory`; if it fails, the app falls back to mock mode. The 5-way digital joystick uses GPIO17 (up), GPIO27 (down), GPIO22 (left), GPIO23 (right), GPIO24 (press), with pull-ups and configured debounce. Buttons remain GPIO5 (RUN), GPIO6 (APPROVE), GPIO13 (STOP), GPIO16 (VOICE). DHT22 data uses GPIO4. Common ground and correct 3.3 V sensor wiring are required.
 
-**Run the server** (serves the built frontend on the same port):
+For kiosk startup, install Chromium, configure the Pi desktop session to launch Chromium in kiosk mode at `http://localhost:8000`, and enable the existing `backend/cockpit.service` with systemd after updating its user and path. Use a 480 × 320 landscape display mode.
 
-```bash
-cd backend
-python -m uvicorn main:app --host 0.0.0.0 --port 8000
-```
+## Wallpaper, workflows, and controls
 
-Open **http://localhost:8000**. The status bar will read **MOCK** — there's
-no GPIO on a laptop, so the backend automatically falls back to mock mode
-(logged clearly on startup). Use the on-screen **dev controls** panel
-(Rotate ◀ / ▶, RUN, Approve, Stop, NEXT) to drive the whole flow:
+- `ui.wallpaper` points to an image URL. The bundled `/assets/wallpapers/default.svg` is the fallback; replace the file or set the config path to another file served from `assets/`. Home uses cover cropping and a readability overlay. A missing image leaves the built-in gradient underneath.
+- Add/edit entries under `workflows` with `label`, optional `description` and `category`, `webhook`, `method`, and optional timeout seconds. Workflow state is per list position and is broadcast live.
+- Change `input_mapping` to change per-screen actions without editing code. `buttons` and `joystick.pins` hold GPIO pins and event names. `ui.clock_24h` selects 24-hour or locale 12-hour time; `music.auto_open` controls the once-per-play transition.
+- Keep webhook URLs and tokens in `config.json` or an environment file; never put credentials in source code. Do not commit real secrets.
 
-- **Rotate** moves the highlighted workflow up/down the current screen's list
-  (wraps at the ends).
-- **NEXT** advances to the next screen (wraps after the last one), resetting
-  the highlight to the top.
-- **RUN** launches the highlighted workflow's webhook; the row flashes
-  "▶ launching…" then "✓ done" / "✗ failed".
-- **Approve** / **Stop** fire their own fixed webhooks regardless of screen/selection.
+## Music and Bluetooth
 
-Every action appears instantly in the event log — that's the WebSocket push,
-not polling.
+Music controls use the system's active MPRIS player through `playerctl`; artwork from `mpris:artUrl` is cached under `backend/cache/artwork/`. Volume uses `wpctl` when available, otherwise `pactl`. A local player such as mpv with an MPRIS plugin or a Spotify Connect receiver on the Pi exposes metadata and controls directly.
 
-> Note: with the placeholder `config.json` webhook URLs (`localhost:5678`),
-> RUN/Approve/Stop will show "✗ failed" unless you have n8n running locally —
-> that's expected and the intended graceful failure behaviour.
+### Bluetooth audio from a phone
 
-While iterating on frontend code you can instead run `npm run dev` in
-`frontend/` (Vite dev server on :5173, proxying `/api` and `/ws` to :8000 —
-see `vite.config.js`) alongside the backend, for hot reload.
+1. Connect speakers to the Pi and verify they play audio. On Raspberry Pi OS Lite, first install and enable BlueZ plus the Bluetooth audio integration matching the active PipeWire/PulseAudio stack; desktop images may already include it.
+2. Open `bluetoothctl` on the Pi and run `power on`, `agent on`, and `default-agent`.
+3. Run `scan on`, note the phone's Bluetooth address, then run `pair <PHONE-MAC>`, `trust <PHONE-MAC>`, and `connect <PHONE-MAC>`. Stop scanning with `scan off`.
+4. On the phone, select the Pi as the Bluetooth audio output and start music. Check the Pi's audio devices with `wpctl status` (or `pactl list short sinks`) and confirm sound reaches the connected speakers.
+5. Check local MPRIS players with `playerctl -l`. A Bluetooth phone can stream audio without appearing as an MPRIS player on the Pi, so metadata, album art, and transport controls may remain unavailable for that phone session. For those features use an MPRIS-capable Pi player, such as mpv with its MPRIS plugin or a Spotify Connect receiver.
 
----
+The app controls the active local MPRIS player through `playerctl`; it does not control the phone's Bluetooth transport directly.
 
-## 2. Configure your webhooks
+### Spotify playing on a Windows laptop
 
-Edit `backend/config.json`. There are three kinds of entries to point at your
-real n8n / agent webhook URLs:
+The Pi cannot see the laptop's local Spotify MPRIS session. Use the companion package in `windows-companion/` to forward now-playing metadata and its Windows media-session artwork over your LAN; the Pi displays it through the existing WebSocket. This sends metadata and album art only, not audio. The bridge is preferred while it is connected and the backend falls back to the Pi's local MPRIS player after 12 seconds without updates.
 
-- `buttons["2"].webhook` — the **Approve** button's webhook.
-- `buttons["3"].webhook` — the **Stop** button's webhook.
-- Each `screens[].workflows[].webhook` — one URL per workflow in the
-  scrollable lists (add/remove/rename screens and workflows freely; the UI is
-  fully config-driven).
+1. On the Cockpit host, run this from `backend/` to create the private shared token, then restart Cockpit:
+   - Linux/Pi: `python -c "import secrets,pathlib; pathlib.Path('companion_token.txt').write_text(secrets.token_urlsafe(32))"`
+   - PowerShell: `python -c "import secrets,pathlib; pathlib.Path('companion_token.txt').write_text(secrets.token_urlsafe(32))"`
+2. Copy the token from `backend/companion_token.txt` using `cat companion_token.txt` on Linux or `Get-Content companion_token.txt` in PowerShell. Do not commit or share it publicly.
+3. Extract `windows-companion/Cockpit-Spotify-Bridge-Windows.zip` on the laptop and launch `Start-Cockpit-Spotify-Bridge.bat`. It creates a local Python environment and installs the required Windows media-session bindings. Python 3.11+ is required; install it from [python.org](https://www.python.org/downloads/windows/) if needed.
+4. Enter the Pi's LAN URL (for example `http://192.168.1.25:8000`) and paste the token at the prompt. Open Spotify and play a track; leave the bridge window running. Its config is stored in `%APPDATA%\CockpitMusicBridge\config.json`.
 
-`buttons["1"]` (RUN) and `buttons["4"]` (NEXT) have no webhook of their own —
-RUN launches whatever workflow is currently highlighted.
+Keep the Pi and laptop on a trusted LAN and allow inbound TCP port 8000 from the laptop. The bridge endpoint requires the shared token. The Music controls continue to target the Pi-local player; forwarding remote playback controls to the laptop is not part of this metadata bridge.
 
-Save the file and restart the backend (or just re-run RUN/Approve/Stop —
-`config.json` is read once at startup, so restart uvicorn after edits).
+## Pi setup checklist
 
----
+- [ ] Wire the DHT22 data line to GPIO4 and install the Raspberry Pi DHT22 Python dependencies (`adafruit-circuitpython-dht` and its board support); confirm readings after startup.
+- [ ] Wire joystick GPIO17/27/22/23/24 and four buttons GPIO5/6/13/16; confirm pull-up logic, shared ground, and debounce.
+- [ ] Connect speakers/headphones; verify the default PipeWire/PulseAudio sink and `wpctl` or `pactl` volume control.
+- [ ] Pair the phone as a Bluetooth audio source if desired; verify audio reception and separately confirm whether a local MPRIS player is available.
+- [ ] Set `mock_mode` to false, verify `/api/health` reports real mode, and check missing DHT22/player behavior is graceful.
+- [ ] Configure Chromium kiosk autostart for `http://localhost:8000` at 480 × 320 landscape.
 
-## 3. Deploy to the Pi
+## Tests
 
-**Option A — git:**
-
-```bash
-git clone https://github.com/VihaanMa11/cockpit.git
-```
-
-(This is a private repo — on the Pi you'll need to authenticate, e.g. `gh auth login` first if you have the GitHub CLI installed, or clone over SSH with a deploy key.)
-
-**Option B — scp, from your laptop:**
-
-```bash
-scp -r cockpit <your-pi-username>@<pi-ip>:/home/<your-pi-username>/
-```
-
-Then, over SSH on the Pi:
-
-```bash
-sudo apt update
-sudo apt install -y python3-lgpio   # prebuilt GPIO backend — avoids compiling lgpio via pip
-
-cd ~/cockpit/backend
-python -m venv --system-site-packages .venv   # --system-site-packages lets the venv see apt's python3-lgpio
-source .venv/bin/activate
-pip install -r requirements.txt     # installs gpiozero + fastapi/uvicorn/httpx
-
-# Node.js is not preinstalled on Raspberry Pi OS — install it (skip if
-# `node --version` already prints v18+):
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt install -y nodejs
-
-cd ../frontend
-npm install
-npm run build                     # or scp your laptop's prebuilt frontend/dist/ across instead
-
-cd ../backend
-python -m uvicorn main:app --host 0.0.0.0 --port 8000
-```
-
-From your **laptop** browser, go to `http://<pi-ip>:8000` (find the Pi's IP
-with `hostname -I` on the Pi). The status bar should now read **REAL** —
-that means real GPIO initialised successfully.
-
----
-
-## 4. Auto-start on boot
-
-```bash
-sudo cp ~/cockpit/backend/cockpit.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable cockpit.service
-sudo systemctl start cockpit.service
-```
-
-`cockpit.service` is already filled in for user `vihaan1106` at
-`/home/vihaan1106/cockpit`. If you ever move the project or use a different
-user, edit `User`, `WorkingDirectory`, and `ExecStart` in that file first.
-
-Check status/logs with `systemctl status cockpit` / `journalctl -u cockpit -f`.
-
-Once enabled, the dashboard comes up automatically on every boot/reboot — no
-more SSH-in-and-run-uvicorn. To stop relying on it temporarily (e.g. to run
-the backend manually in a foreground terminal for debugging), stop the
-service first so it doesn't fight over port 8000: `sudo systemctl stop
-cockpit.service`.
-
----
-
-## 5. Wiring (BCM pin numbers — see HARDWARE_SPEC.md for full detail)
-
-| Component              | GPIO (BCM) | Other leg |
-|-------------------------|-----------|-----------|
-| Button 1 — RUN           | GPIO5     | GND rail  |
-| Button 2 — Approve       | GPIO6     | GND rail  |
-| Button 3 — Stop          | GPIO13    | GND rail  |
-| Button 4 — NEXT          | GPIO16    | GND rail  |
-| Encoder A (outer pin)    | GPIO17    | —         |
-| Encoder B (outer pin)    | GPIO27    | —         |
-| Encoder C (common)       | GND       | —         |
-
-Buttons use the Pi's internal pull-ups (no external resistors). The encoder
-is a bare 3-pin type with **no push switch** — RUN is the only launch
-control. All GND legs share one common ground rail back to any Pi GND pin.
-
----
-
-## 6. Troubleshooting
-
-- **`npm: command not found` on the Pi:** Node.js isn't preinstalled on
-  Raspberry Pi OS. Install it with `curl -fsSL
-  https://deb.nodesource.com/setup_20.x | sudo -E bash -` then `sudo apt
-  install -y nodejs` (as shown in section 3), then retry `npm install && npm
-  run build` in `frontend/`.
-- **Can't reach `http://<pi-ip>:8000` from your laptop:** confirm both
-  devices are on the same WiFi, confirm the Pi's IP with `hostname -I`, and
-  confirm the server log says `Uvicorn running on http://0.0.0.0:8000` (not
-  `127.0.0.1` — if it says that, the bind host in your run command is wrong).
-  Also check the Pi's firewall (`sudo ufw status`) isn't blocking port 8000.
-- **Status bar stuck on MOCK on the Pi:** check the startup log line from
-  `hardware.py` — it prints the real GPIO init error (`No module named
-  'lgpio'` means the venv can't see it). Fix: `sudo apt install -y
-  python3-lgpio`, then recreate the venv **with** `--system-site-packages`
-  (`python -m venv --system-site-packages .venv`) so it picks up the
-  apt-installed module — a plain `.venv` without that flag won't see it. Also
-  make sure you're in the `gpio` group (`sudo usermod -aG gpio $USER`, then
-  log out/in).
-- **`pip install` fails building `lgpio` wheel (`swig: No such file or
-  directory` etc.):** you're hitting the exact problem the apt-based install
-  above avoids — `lgpio` isn't in `requirements.txt` on purpose. Don't
-  `pip install lgpio` directly; use `sudo apt install -y python3-lgpio` +
-  `--system-site-packages` as shown in section 3.
-- **Pin factory errors:** make sure you're on Raspberry Pi OS with the
-  `lgpio` library available, and that no other process (old pigpiod, another
-  instance of this app) is holding the GPIO lines.
-- **A button/encoder never registers:** almost always a loose wire or a
-  missing ground — recheck that leg and the shared GND rail before suspecting
-  the code.
-- **Webhook shows "✗ failed":** check the URL in `config.json`, confirm the
-  n8n workflow is **active**, and confirm the Pi can reach that URL (e.g.
-  `curl` it from the Pi over SSH).
+From `backend/`, run `python -m unittest discover -s tests`. From `frontend/`, run `npm run build`.

@@ -1,42 +1,44 @@
 {
+  "mock_mode": true,
   "buttons": {
-    "1": { "label": "RUN",     "role": "launch" },
-    "2": { "label": "Approve", "role": "webhook", "webhook": "http://localhost:5678/webhook/approve" },
-    "3": { "label": "Stop",    "role": "webhook", "webhook": "http://localhost:5678/webhook/stop" },
-    "4": { "label": "NEXT",    "role": "next_screen" }
+    "1": { "label": "RUN", "event": "run", "pin": 5 },
+    "2": { "label": "APPROVE", "event": "approve", "pin": 6 },
+    "3": { "label": "STOP", "event": "stop", "pin": 13 },
+    "4": { "label": "VOICE", "event": "voice", "pin": 16 }
   },
-  "encoder": { "type": "bare 3-pin, no push switch", "rotate": "move_selection" },
-  "screens": [
-    {
-      "name": "Agent",
-      "workflows": [
-        { "label": "Approve current step", "webhook": "http://localhost:5678/webhook/agent-approve" },
-        { "label": "Summarise session",    "webhook": "http://localhost:5678/webhook/agent-summary" }
-      ]
-    },
-    {
-      "name": "Hermes",
-      "workflows": [
-        { "label": "Hermes: daily digest", "webhook": "http://localhost:5678/webhook/hermes-digest" },
-        { "label": "Hermes: inbox triage", "webhook": "http://localhost:5678/webhook/hermes-inbox" },
-        { "label": "Hermes: PO extract",   "webhook": "http://localhost:5678/webhook/hermes-po" },
-        { "label": "Hermes: standup note", "webhook": "http://localhost:5678/webhook/hermes-standup" }
-      ]
-    },
-    {
-      "name": "n8n",
-      "workflows": [
-        { "label": "Email filtering", "webhook": "https://n8n.vihaanprtf.tech/webhook/gmail-auto-sort-run" },
-        { "label": "Workflow B", "webhook": "http://localhost:5678/webhook/workflow-b" }
-      ]
-    },
-    {
-      "name": "Tasks",
-      "workflows": [
-        { "label": "Dummy task 1", "webhook": "http://localhost:5678/webhook/tasks-dummy-1" },
-        { "label": "Dummy task 2", "webhook": "http://localhost:5678/webhook/tasks-dummy-2" },
-        { "label": "Dummy task 3", "webhook": "http://localhost:5678/webhook/tasks-dummy-3" }
-      ]
-    }
+  "joystick": {
+    "type": "digital-5-way",
+    "pins": { "up": 17, "down": 27, "left": 22, "right": 23, "press": 24 },
+    "bounce_time": 0.05
+  },
+  "input_mapping": {
+    "left": { "action": "navigate", "delta": -1 },
+    "right": { "action": "navigate", "delta": 1 },
+    "up": { "home": "none", "music": "volume_up", "agents": "select_prev" },
+    "down": { "home": "none", "music": "volume_down", "agents": "select_next" },
+    "press": { "home": "none", "music": "play_pause", "agents": "run_workflow" },
+    "run": { "home": "none", "music": "play_pause", "agents": "run_workflow" },
+    "approve": { "home": "none", "music": "next_track", "agents": "none" },
+    "stop": { "home": "none", "music": "previous_track", "agents": "none" },
+    "voice": { "home": "none", "music": "none", "agents": "none" }
+  },
+  "ui": { "wallpaper": "/static/wallpapers/default.svg", "clock_24h": false },
+  "music": { "auto_open": true, "poll_seconds": 1.5, "mock_track_seconds": 210 },
+  "sensors": { "dht22_gpio": 4, "stale_seconds": 30 },
+  "workflows": [
+    { "label": "Approve current step", "description": "Approve the pending agent step", "category": "Agent", "webhook": "http://localhost:5678/webhook/agent-approve", "method": "POST" },
+    { "label": "Summarise session", "description": "Create a concise session summary", "category": "Agent", "webhook": "http://localhost:5678/webhook/agent-summary", "method": "POST" },
+    { "label": "Hermes: daily digest", "category": "Hermes", "webhook": "http://localhost:5678/webhook/hermes-digest", "method": "POST" },
+    { "label": "Hermes: inbox triage", "category": "Hermes", "webhook": "http://localhost:5678/webhook/hermes-inbox", "method": "POST" },
+    { "label": "Hermes: PO extract", "category": "Hermes", "webhook": "http://localhost:5678/webhook/hermes-po", "method": "POST" },
+    { "label": "Hermes: standup note", "category": "Hermes", "webhook": "http://localhost:5678/webhook/hermes-standup", "method": "POST" },
+    { "label": "Email filtering", "description": "Run Gmail auto-sort", "category": "n8n", "webhook": "https://n8n.vihaanprtf.tech/webhook/gmail-auto-sort-run", "method": "POST" },
+    { "label": "Workflow B", "category": "n8n", "webhook": "http://localhost:5678/webhook/workflow-b", "method": "POST" },
+    { "label": "Dummy task 1", "category": "Tasks", "webhook": "http://localhost:5678/webhook/tasks-dummy-1", "method": "POST" },
+    { "label": "Dummy task 2", "category": "Tasks", "webhook": "http://localhost:5678/webhook/tasks-dummy-2", "method": "POST" },
+    { "label": "Dummy task 3", "category": "Tasks", "webhook": "http://localhost:5678/webhook/tasks-dummy-3", "method": "POST" },
+    { "label": "Demo success", "category": "Demo", "webhook": "mock://success", "method": "POST" },
+    { "label": "Demo failure", "category": "Demo", "webhook": "mock://failure", "method": "POST" },
+    { "label": "Demo timeout", "category": "Demo", "webhook": "mock://timeout", "method": "POST" }
   ]
 }

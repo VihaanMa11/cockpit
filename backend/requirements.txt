@@ -8,3 +8,6 @@ gpiozero==2.0.1
 #   sudo apt install -y python3-lgpio
 #   python -m venv --system-site-packages .venv
 # so the venv sees the apt-installed module directly. See README section 3.
+
+# Optional on Raspberry Pi for the DHT22 sensor: adafruit-circuitpython-dht
+# Install board support for the specific Pi OS; sensor absence is handled gracefully.

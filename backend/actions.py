@@ -1,25 +1,20 @@
-"""Outbound webhook calls (n8n / agent endpoints)."""
-
+"""Outbound n8n webhook requests with bounded timeouts."""
 import logging
-
 import httpx
 
 logger = logging.getLogger("cockpit.actions")
 
-WEBHOOK_TIMEOUT_SECONDS = 3.0
 
-
-async def post_webhook(url: str, payload: dict) -> bool:
-    """POST a JSON payload to url. Returns True on a 2xx response, False on
-    any timeout, connection error, or non-2xx status. Never raises."""
+async def post_webhook(url: str, payload: dict, method: str = "POST", timeout: float = 5.0):
     if not url:
-        logger.warning("post_webhook: no URL configured, skipping")
-        return False
+        return False, "No webhook configured"
     try:
-        async with httpx.AsyncClient(timeout=WEBHOOK_TIMEOUT_SECONDS) as client:
-            response = await client.post(url, json=payload)
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            response = await client.request(method.upper(), url, json=payload)
             response.raise_for_status()
-            return True
+            return True, None
+    except httpx.TimeoutException:
+        return False, "Request timed out"
     except httpx.HTTPError as exc:
-        logger.warning("post_webhook: %s failed: %s", url, exc)
-        return False
+        logger.warning("webhook request failed: %s", exc)
+        return False, "Webhook request failed"

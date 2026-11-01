@@ -1,6 +1,13 @@
 # Python
 backend/.venv/
 backend/__pycache__/
+backend/cache/
+backend/companion_token.txt
+v1/backend/.venv/
+v1/backend/__pycache__/
+v1/backend/cache/
+windows-companion/.venv/
+windows-companion/.worktmp/
 *.pyc
 
 # Node / frontend build
