@@ -54,7 +54,7 @@ chmod +x scripts/setup-pi.sh
 sudo reboot
 ```
 
-The included script configures the app and kiosk startup; the vendor display driver is a separate prerequisite. After both are installed, power-on should load the desktop session and Chromium kiosk into Cockpit Home. A TFT connected before its driver is installed can remain white; Cockpit code alone cannot initialize the panel controller. Touch calibration/orientation is installed by the driver and may need adjustment if taps do not line up. Verify touch and all physical controls after the first boot.
+The included script configures the app and kiosk startup; the vendor display driver is a separate prerequisite. After both are installed, power-on should load the desktop session and Chromium kiosk into Cockpit Home. A TFT connected before its driver is installed can remain white; Cockpit code alone cannot initialize the panel controller. The vendor driver initializes the touch device and its calibration/orientation may need adjustment. Cockpit screen changes and workflow approval currently use the joystick/buttons; touch-to-action support is not enabled yet.
 
 ### Python environment
 
