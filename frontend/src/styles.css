@@ -197,7 +197,8 @@ button { font:inherit; -webkit-tap-highlight-color:transparent; touch-action:man
 }
 
 /* Music polish: full-surface artwork, non-overlapping timecodes and TFT-friendly controls. */
-.music-hero { grid-template-columns: clamp(112px, 24vw, 260px) minmax(0, 1fr); }
+.music-hero { width: 100%; grid-template-columns: clamp(112px, 24vw, 260px) minmax(0, 1fr); }
+.music-controls { width: 100%; }
 .disc-wrap { justify-self: start; margin-left: -4px; }
 .disc { position: relative; overflow: hidden; background: #080d0f; }
 .disc-art { position: absolute; inset: 0; z-index: 0; width: auto; height: auto; overflow: hidden; border: 0; border-radius: 50%; background: radial-gradient(circle at 35% 28%, #16312e, #061113 72%); box-shadow: none; }
@@ -209,23 +210,28 @@ button { font:inherit; -webkit-tap-highlight-color:transparent; touch-action:man
 .music-screen .time-row { display: flex; justify-content: space-between; gap: 12px; width: 100%; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .music-screen .time-row span { min-width: 5ch; }
 .music-screen .time-row span:last-child { text-align: right; }
-.volume-track { min-width: 40px; }
+.volume-track { min-width: 40px; overflow: visible; margin-inline: 7px; }
 .volume-track:focus-visible { outline: 2px solid var(--accent-bright); outline-offset: 5px; }
 .volume-track i { transition: width .12s ease; }
 @media (max-width: 600px) {
-  .music-hero { grid-template-columns: clamp(104px, 28vw, 134px) minmax(0, 1fr); gap: clamp(8px, 2vw, 12px); }
-  .disc-wrap { width: min(100%, clamp(104px, 28vw, 134px)); margin-left: -3px; }
-  .music-controls { grid-template-columns: minmax(0, 1fr); gap: 6px; }
-  .volume-control { min-height: 34px; padding-inline: 12px; }
-  .volume-control b { min-width: 4ch; text-align: right; }
-  .transport { grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
-  .transport button { height: 38px; }
-  .transport .primary-transport { width: 44px; height: 44px; }
+  .music-hero { grid-template-columns: clamp(96px, 22.5vw, 128px) minmax(0, 1fr); gap: clamp(8px, 2vw, 12px); }
+  .disc-wrap { width: min(100%, clamp(96px, 22.5vw, 128px)); margin-left: -3px; }
+  .music-controls { grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 8px; }
+  .volume-control { min-height: 44px; gap: 6px; padding-inline: 9px; }
+  .volume-control .glyph { width: 18px; height: 18px; }
+  .volume-control b { min-width: 4ch; font-size: 9px; text-align: right; }
+  .transport { grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+  .transport button { height: 42px; border-radius: 11px; }
+  .transport button .glyph { width: 20px; height: 20px; }
+  .transport .primary-transport { width: 46px; height: 46px; }
 }
 @media (max-width: 370px) {
   .music-hero { grid-template-columns: 92px minmax(0, 1fr); }
   .disc-wrap { width: 90px; }
   .music-screen .time-row { font-size: 9px; }
+  .music-controls { grid-template-columns: minmax(0, 1fr); }
+}
+@media (orientation: portrait) and (max-width: 600px) {
   .music-controls { grid-template-columns: minmax(0, 1fr); }
 }
 
