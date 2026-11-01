@@ -8,6 +8,10 @@
 - Added playerctl and PulseAudio volume utilities to the Pi setup and made setup restart the running backend after updates.
 - Documented MPI3501 portrait/landscape rotation commands and the two-stage Pi then Spotify bridge setup.
 
+## Raspberry Pi Node.js package fix
+
+- Avoid installing Debian's standalone `npm` package alongside NodeSource Node.js, which conflicts on Raspberry Pi OS Trixie; verify the bundled npm command before building.
+
 ## Raspberry Pi OS Trixie desktop boot fix
 
 - Fixed the Pi setup flow for Raspberry Pi OS Lite: it now installs the Trixie Wayland desktop packages (or Bookworm desktop packages), selects the release-appropriate desktop boot mode, and enables graphical startup before installing kiosk autostart.

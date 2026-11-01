@@ -30,7 +30,12 @@ case "$OS_CODENAME" in
     exit 1
     ;;
 esac
-sudo apt install -y python3-full python3-venv python3-lgpio nodejs npm chromium playerctl pulseaudio-utils "${GUI_PACKAGES[@]}"
+sudo apt install -y python3-full python3-venv python3-lgpio nodejs chromium playerctl pulseaudio-utils "${GUI_PACKAGES[@]}"
+
+if ! command -v npm >/dev/null 2>&1; then
+  echo "npm was not found. Install Node.js with its bundled npm, then rerun this script." >&2
+  exit 1
+fi
 
 python3 -m venv --system-site-packages "$BACKEND/.venv"
 "$BACKEND/.venv/bin/python" -m pip install --upgrade pip
