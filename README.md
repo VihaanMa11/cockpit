@@ -1,6 +1,6 @@
 # Cockpit v2
 
-Cockpit v2 is a React/Vite desk console served by FastAPI. Its 3:2 layout fills the 480 × 320 landscape area of the 3.5-inch SPI TFT and scales up to a 960 × 640 canvas on larger laptop windows. Navigation is keyboard or GPIO only.
+Cockpit v2 is a React/Vite desk console served by FastAPI. Its responsive 3:2 layout fills the 480 × 320 landscape area of the MPI3501-style 3.5-inch SPI TFT and scales up to a 960 × 640 canvas on larger laptop windows. It supports keyboard and configured GPIO controls; the TFT's touch driver is configured separately by the Pi display setup.
 
 ## Laptop mock mode
 
@@ -14,26 +14,53 @@ Mock mode is enabled by `mock_mode: true` in `backend/config.json`. Arrow keys n
 
 ## Raspberry Pi
 
-Use Raspberry Pi OS 64-bit with Python, Node, and the GPIO packages described in `backend/requirements.txt`. Install `playerctl` and a working PipeWire (`wpctl`) or PulseAudio (`pactl`) audio server. Build the UI with `npm run build` in `frontend/`; run the backend with `python -m uvicorn main:app --host 0.0.0.0 --port 8000` from `backend/`.
+Use Raspberry Pi OS 64-bit with a desktop session. Set up the TFT driver first, reboot, then run the included setup script from the repository root. It builds the UI, creates the Python venv, installs the DHT22 driver, enables real GPIO mode, installs the backend service, and configures Chromium kiosk autostart to open Cockpit at `/` after desktop login.
 
-### Install Python dependencies in the project environment
+### TFT display, joystick, buttons, and DHT22
 
-Raspberry Pi OS Bookworm and newer mark system Python as externally managed. Install the GPIO driver through `apt`, then install the app's Python packages into its virtual environment. Run these commands from the Pi:
+The photo matches the MPI3501-style 3.5-inch RPi Display (480 × 320, ILI9486 display controller, XPT2046 resistive touch). Its SPI/touch overlay uses GPIO7–11, GPIO17, GPIO24, and GPIO25. The old joystick map used GPIO17 and GPIO24, which conflict with the screen, so the current map is:
+
+| Control | BCM GPIO | Physical pin |
+| --- | ---: | ---: |
+| Joystick up | 18 | 12 |
+| Joystick down | 19 | 35 |
+| Joystick left | 20 | 38 |
+| Joystick right | 21 | 40 |
+| Joystick press | 22 | 15 |
+| RUN button | 5 | 29 |
+| APPROVE button | 6 | 31 |
+| STOP button | 13 | 33 |
+| VOICE button | 16 | 36 |
+| DHT22 data | 4 | 7 |
+
+Use BCM numbering in `backend/config.json`; do not confuse BCM GPIO numbers with physical header pin numbers. **The display covers the first 26 physical pins.** To use the joystick, buttons, and DHT22 with the screen attached, fit a 40-pin stack-through/extended header or equivalent GPIO breakout that exposes the Pi pins while the TFT is mounted. Do not connect an input to GPIO7–11, 17, 24, or 25; those belong to the TFT/touch interface. The DHT22 needs 3.3 V, ground, data on GPIO4, and a 4.7–10 kΩ pull-up between data and 3.3 V if the sensor board does not include one.
+
+For the screen driver, the manufacturer identifies this board family as MPI3501 and documents the `LCD35-show` driver. Back up the Pi before installing a third-party display driver; the vendor script changes boot/display configuration and reboots the Pi. From the Pi terminal, install it and reboot:
 
 ```sh
-sudo apt update
-sudo apt install -y python3-full python3-lgpio
-cd ~/cockpit/backend
-python3 -m venv --system-site-packages .venv
-./.venv/bin/python -m pip install --upgrade pip
-./.venv/bin/python -m pip install -r requirements.txt
+cd ~
+git clone https://github.com/goodtft/LCD-show.git
+cd LCD-show
+sudo ./LCD35-show
 ```
 
-Using `./.venv/bin/python -m pip` explicitly avoids accidentally invoking system `pip`. If the DHT22 is connected, install its optional driver into the same environment with `./.venv/bin/python -m pip install adafruit-circuitpython-dht`. Do not use `sudo pip` or `--break-system-packages`.
+After the Pi reboots and the screen shows the Raspberry Pi desktop, clone/pull Cockpit and run:
 
-Before enabling hardware, set `mock_mode` to `false` in `backend/config.json`. GPIO initialization uses gpiozero with `LGPIOFactory`; if it fails, the app falls back to mock mode. The 5-way digital joystick uses GPIO17 (up), GPIO27 (down), GPIO22 (left), GPIO23 (right), GPIO24 (press), with pull-ups and configured debounce. Buttons remain GPIO5 (RUN), GPIO6 (APPROVE), GPIO13 (STOP), GPIO16 (VOICE). DHT22 data uses GPIO4. Common ground and correct 3.3 V sensor wiring are required.
+```sh
+cd ~/cockpit/cockpitv2
+git pull origin master
+chmod +x scripts/setup-pi.sh
+./scripts/setup-pi.sh
+sudo reboot
+```
 
-For kiosk startup, install Chromium, configure the Pi desktop session to launch Chromium in kiosk mode at `http://localhost:8000`, and enable the existing `backend/cockpit.service` with systemd after updating its user and path. Use a 480 × 320 landscape display mode.
+The included script configures the app and kiosk startup; the vendor display driver is a separate prerequisite. After both are installed, power-on should load the desktop session and Chromium kiosk into Cockpit Home. A TFT connected before its driver is installed can remain white; Cockpit code alone cannot initialize the panel controller. Touch calibration/orientation is installed by the driver and may need adjustment if taps do not line up. Verify touch and all physical controls after the first boot.
+
+### Python environment
+
+The setup script creates `backend/.venv` with `--system-site-packages`, installs `python3-lgpio` through `apt`, and installs all Python packages into that virtual environment. This avoids Raspberry Pi OS's externally-managed system Python error. Do not use `sudo pip` or `--break-system-packages`.
+
+GPIO initialization uses gpiozero with `LGPIOFactory`; if it fails, the app falls back to mock mode. The setup script sets `mock_mode` to `false`. Use the pin table above and ensure all inputs share a common ground. The TFT must be configured for 480 × 320 landscape orientation.
 
 ## Wallpaper, workflows, and controls
 
@@ -71,12 +98,14 @@ Keep the Pi and laptop on a trusted LAN and allow inbound TCP port 8000 from the
 
 ## Pi setup checklist
 
-- [ ] Wire the DHT22 data line to GPIO4 and install the Raspberry Pi DHT22 Python dependencies (`adafruit-circuitpython-dht` and its board support); confirm readings after startup.
-- [ ] Wire joystick GPIO17/27/22/23/24 and four buttons GPIO5/6/13/16; confirm pull-up logic, shared ground, and debounce.
+- [ ] Install the MPI3501-compatible `LCD35-show` display/touch driver and verify the 480 × 320 desktop appears before installing kiosk startup.
+- [ ] Fit a stack-through GPIO header/breakout so the buttons, remapped joystick, and sensor remain reachable with the TFT installed.
+- [ ] Wire the DHT22 data line to GPIO4 and confirm readings after startup.
+- [ ] Wire joystick GPIO18/19/20/21/22 and buttons GPIO5/6/13/16; confirm pull-up logic, shared ground, and debounce.
 - [ ] Connect speakers/headphones; verify the default PipeWire/PulseAudio sink and `wpctl` or `pactl` volume control.
 - [ ] Pair the phone as a Bluetooth audio source if desired; verify audio reception and separately confirm whether a local MPRIS player is available.
 - [ ] Set `mock_mode` to false, verify `/api/health` reports real mode, and check missing DHT22/player behavior is graceful.
-- [ ] Configure Chromium kiosk autostart for `http://localhost:8000` at 480 × 320 landscape.
+- [ ] Run `scripts/setup-pi.sh`, reboot, and confirm Chromium opens Cockpit Home automatically on the TFT.
 
 ## Tests
 

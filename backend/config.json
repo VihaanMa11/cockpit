@@ -8,7 +8,7 @@
   },
   "joystick": {
     "type": "digital-5-way",
-    "pins": { "up": 17, "down": 27, "left": 22, "right": 23, "press": 24 },
+    "pins": { "up": 18, "down": 19, "left": 20, "right": 21, "press": 22 },
     "bounce_time": 0.05
   },
   "input_mapping": {
@@ -24,6 +24,15 @@
   },
   "ui": { "wallpaper": "/static/wallpapers/default.svg", "clock_24h": false },
   "music": { "auto_open": true, "poll_seconds": 1.5, "mock_track_seconds": 210 },
+  "display": {
+    "model": "MPI3501",
+    "resolution": [480, 320],
+    "rotation": 90,
+    "overlay": "tft35a",
+    "touch_controller": "XPT2046",
+    "conflicting_gpio": [7, 8, 9, 10, 11, 17, 24, 25],
+    "requires_stack_through_header": true
+  },
   "sensors": { "dht22_gpio": 4, "stale_seconds": 30 },
   "workflows": [
     { "label": "Approve current step", "description": "Approve the pending agent step", "category": "Agent", "webhook": "http://localhost:5678/webhook/agent-approve", "method": "POST" },
