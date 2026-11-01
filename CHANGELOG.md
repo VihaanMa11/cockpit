@@ -1,5 +1,9 @@
 # Changelog
 
+## Raspberry Pi setup clarification
+
+- Documented the Bookworm-and-newer externally managed Python behavior and explicit project-venv install commands, keeping `lgpio` in the OS package manager for GPIO access.
+
 ## Windows Spotify companion
 
 - Added a token-authenticated local-network endpoint that accepts Spotify now-playing metadata and thumbnail artwork from a Windows laptop, caches the artwork on the Cockpit host, and broadcasts the state over the existing WebSocket.

@@ -16,6 +16,21 @@ Mock mode is enabled by `mock_mode: true` in `backend/config.json`. Arrow keys n
 
 Use Raspberry Pi OS 64-bit with Python, Node, and the GPIO packages described in `backend/requirements.txt`. Install `playerctl` and a working PipeWire (`wpctl`) or PulseAudio (`pactl`) audio server. Build the UI with `npm run build` in `frontend/`; run the backend with `python -m uvicorn main:app --host 0.0.0.0 --port 8000` from `backend/`.
 
+### Install Python dependencies in the project environment
+
+Raspberry Pi OS Bookworm and newer mark system Python as externally managed. Install the GPIO driver through `apt`, then install the app's Python packages into its virtual environment. Run these commands from the Pi:
+
+```sh
+sudo apt update
+sudo apt install -y python3-full python3-lgpio
+cd ~/cockpit/backend
+python3 -m venv --system-site-packages .venv
+./.venv/bin/python -m pip install --upgrade pip
+./.venv/bin/python -m pip install -r requirements.txt
+```
+
+Using `./.venv/bin/python -m pip` explicitly avoids accidentally invoking system `pip`. If the DHT22 is connected, install its optional driver into the same environment with `./.venv/bin/python -m pip install adafruit-circuitpython-dht`. Do not use `sudo pip` or `--break-system-packages`.
+
 Before enabling hardware, set `mock_mode` to `false` in `backend/config.json`. GPIO initialization uses gpiozero with `LGPIOFactory`; if it fails, the app falls back to mock mode. The 5-way digital joystick uses GPIO17 (up), GPIO27 (down), GPIO22 (left), GPIO23 (right), GPIO24 (press), with pull-ups and configured debounce. Buttons remain GPIO5 (RUN), GPIO6 (APPROVE), GPIO13 (STOP), GPIO16 (VOICE). DHT22 data uses GPIO4. Common ground and correct 3.3 V sensor wiring are required.
 
 For kiosk startup, install Chromium, configure the Pi desktop session to launch Chromium in kiosk mode at `http://localhost:8000`, and enable the existing `backend/cockpit.service` with systemd after updating its user and path. Use a 480 × 320 landscape display mode.
