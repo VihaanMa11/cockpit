@@ -6,7 +6,7 @@
 - Frontend development: in another terminal run `cd frontend`, `npm install`, `npm run dev`; Vite proxies API and WebSocket requests to port 8000.
 - Production: run `npm run build` in `frontend/`; FastAPI serves `frontend/dist` from port 8000.
 - Hardware is auto-detected; unavailable GPIO, DHT22, and MPRIS devices must leave the backend in mock/degraded operation, not prevent startup.
-- Pi deployment: install the MPI3501 TFT driver first, then run `scripts/setup-pi.sh` from the checkout root. The script generates the service unit for the active Pi username/path and configures desktop kiosk startup.
+- Pi deployment: install the MPI3501 TFT driver first, then run `scripts/setup-pi.sh` from the checkout root. Keep the desktop on HDMI and run the separate Chromium kiosk session against `/dev/fb1` on the TFT; do not mirror the HDMI framebuffer.
 
 ## Conventions
 

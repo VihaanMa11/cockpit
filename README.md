@@ -14,7 +14,7 @@ Mock mode is enabled by `mock_mode: true` in `backend/config.json`. Arrow keys n
 
 ## Raspberry Pi
 
-Use Raspberry Pi OS 64-bit. The setup script installs the desktop packages when starting from Raspberry Pi OS Lite (Trixie or Bookworm), selects desktop boot, then builds the UI, creates the Python venv, installs the DHT22 driver, enables real GPIO mode, installs the backend service, and configures Chromium kiosk autostart to open Cockpit at `/` after desktop login. Set up the TFT driver first, then pull the latest repository and rerun the script.
+Use Raspberry Pi OS 64-bit. The setup script installs the desktop packages when starting from Raspberry Pi OS Lite (Trixie or Bookworm), builds the UI, creates the Python venv, enables real GPIO mode, and installs the backend. The HDMI runs the normal Raspberry Pi desktop; a separate Xorg session targets `/dev/fb1` and starts Chromium kiosk on the SPI TFT only. Install the TFT driver first, then pull the latest repository and rerun the script.
 
 ### TFT display, joystick, buttons, and DHT22
 
@@ -54,15 +54,15 @@ chmod +x scripts/setup-pi.sh
 sudo reboot
 ```
 
-The included script installs a graphical desktop if needed, builds the app, and configures Chromium kiosk to open Cockpit Home. The vendor display driver is a separate prerequisite; Cockpit code alone cannot initialize the panel controller. The panel's default orientation is landscape. To keep the portrait orientation you requested, run `cd ~/LCD-show && sudo ./rotate.sh 90`; on this MPI3501 driver, that adds 90° to its default and updates touch calibration with the display rotation. The UI reflows to fit portrait. To restore landscape, run `sudo ./rotate.sh 0`. The script reboots the Pi after changing the orientation.
+The included script installs a graphical desktop if needed and configures independent displays: the OS desktop stays on HDMI, while the TFT's `/dev/fb1` gets a second Xorg session running Cockpit in kiosk mode. It removes any old Cockpit autostart from the HDMI desktop and disables the earlier `cockpit-display-mirror` service. The vendor display driver is a separate prerequisite; Cockpit code alone cannot initialize the panel controller. The panel's default orientation is landscape. To keep the portrait orientation you requested, run `cd ~/LCD-show && sudo ./rotate.sh 90`; on this MPI3501 driver, that adds 90° to its default and updates touch calibration with the display rotation. The UI reflows to fit portrait. To restore landscape, run `sudo ./rotate.sh 0`. The script reboots the Pi after changing the orientation.
 
-Touchscreen taps work in the local kiosk: tap the bottom screen indicators to navigate, tap a workflow row to select it, and use `RUN SELECTED` to trigger it. Local touch actions are accepted only from the Pi itself at `127.0.0.1:8000`, with a matching same-origin request. A browser opened from another computer can view Cockpit, but it cannot trigger local kiosk actions. Physical joystick and buttons continue to work independently.
+Touchscreen taps work in the TFT kiosk: tap the bottom screen indicators to switch Home/Music/Agents, tap a workflow row to select it, and use `RUN SELECTED` to trigger it. Local touch actions are accepted only from a same-origin loopback request on the Pi. Physical joystick and buttons continue to work independently. Open `http://127.0.0.1:8000/` in a browser on HDMI when you want to manage Cockpit on the larger screen; both views use the same backend state.
 
 ### Python environment
 
 The setup script creates `backend/.venv` with `--system-site-packages`, installs `python3-lgpio` through `apt`, and installs all Python packages into that virtual environment. This avoids Raspberry Pi OS's externally-managed system Python error. Do not use `sudo pip` or `--break-system-packages`.
 
-GPIO initialization uses gpiozero with `LGPIOFactory`; if it fails, the app falls back to mock mode. The setup script sets `mock_mode` to `false`. Use the pin table above and ensure all inputs share a common ground. The TFT must be configured for 480 × 320 landscape orientation.
+GPIO initialization uses gpiozero with `LGPIOFactory`; if it fails, the app falls back to mock mode. The setup script sets `mock_mode` to `false`. Use the pin table above and ensure all inputs share a common ground. The TFT Xorg session uses the framebuffer's configured 480 × 320 mode, with portrait CSS reflow when rotated.
 
 ## Wallpaper, workflows, and controls
 
@@ -109,7 +109,7 @@ Keep the Pi and laptop on a trusted LAN and allow inbound TCP port 8000 from the
 - [ ] Connect speakers/headphones; verify the default PipeWire/PulseAudio sink and `wpctl` or `pactl` volume control.
 - [ ] Pair the phone as a Bluetooth audio source if desired; verify audio reception and separately confirm whether a local MPRIS player is available.
 - [ ] Set `mock_mode` to false, verify `/api/health` reports real mode, and check missing DHT22/player behavior is graceful.
-- [ ] Run `scripts/setup-pi.sh`, reboot, and confirm Chromium opens Cockpit Home automatically on the TFT.
+- [ ] Run `scripts/setup-pi.sh`, reboot, and confirm the Raspberry Pi desktop stays on HDMI while Cockpit Home opens only on the TFT.
 
 ## Tests
 

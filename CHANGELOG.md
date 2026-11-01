@@ -12,6 +12,11 @@
 
 - Avoid installing Debian's standalone `npm` package alongside NodeSource Node.js, which conflicts on Raspberry Pi OS Trixie; verify the bundled npm command before building.
 
+## Independent HDMI desktop and TFT kiosk
+
+- Removed HDMI framebuffer mirroring. The Pi desktop stays on HDMI while a separate Xorg framebuffer session launches Cockpit kiosk on the SPI TFT (`/dev/fb1`).
+- The Pi setup installs the Xorg framebuffer driver, removes the Cockpit launch from desktop autostart, cleans up the LCD-show login-time `startx` command with a backup, and disables the old mirror service.
+
 ## Raspberry Pi OS Trixie desktop boot fix
 
 - Fixed the Pi setup flow for Raspberry Pi OS Lite: it now installs the Trixie Wayland desktop packages (or Bookworm desktop packages), selects the release-appropriate desktop boot mode, and enables graphical startup before installing kiosk autostart.
