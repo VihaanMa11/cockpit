@@ -336,7 +336,16 @@ async def companion_music_commands(request: Request):
         raise HTTPException(status_code=401, detail="Invalid Cockpit companion token")
     commands = remote_music["commands"]
     remote_music["commands"] = []
-    return {"commands": commands}
+    return {
+        "commands": commands,
+        # A restarted Cockpit process loses its in-memory artwork URL. Ask the
+        # still-running laptop bridge to resend the current cover in that case.
+        "request_artwork": bool(
+            remote_music["state"]
+            and remote_music["state"].get("active")
+            and not remote_music["art_url"]
+        ),
+    }
 
 
 @app.post("/api/dev/event/{event}")
@@ -419,3 +428,4 @@ else:
     @app.get("/")
     async def frontend_missing():
         return {"detail": "frontend/dist not built yet — run npm run build in frontend/"}
+
