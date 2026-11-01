@@ -67,8 +67,7 @@ PY
 sudo tee /etc/systemd/system/cockpit.service >/dev/null <<EOF
 [Unit]
 Description=Cockpit desk console backend
-After=network-online.target
-Wants=network-online.target
+After=network.target
 
 [Service]
 User=$PI_USER
@@ -106,7 +105,7 @@ cat > "$PI_HOME/.local/bin/cockpit-tft-kiosk" <<EOF
 #!/bin/sh
 xset -dpms
 xset s off
-exec "$CHROMIUM" --kiosk --no-first-run --disable-infobars --disable-session-crashed-bubble http://127.0.0.1:8000/
+exec "$CHROMIUM" --kiosk --start-fullscreen --window-position=0,0 --window-size=480,320 --force-device-scale-factor=1 --no-first-run --disable-infobars --disable-session-crashed-bubble http://127.0.0.1:8000/
 EOF
 chmod +x "$PI_HOME/.local/bin/cockpit-tft-kiosk"
 chown "$PI_USER":"$(id -gn "$PI_USER")" "$PI_HOME/.local/bin/cockpit-tft-kiosk"
@@ -150,7 +149,7 @@ EOF
 sudo tee /etc/systemd/system/cockpit-tft-kiosk.service >/dev/null <<EOF
 [Unit]
 Description=Cockpit-only kiosk on the SPI TFT framebuffer
-After=display-manager.service cockpit.service user-runtime-dir@${PI_UID}.service
+After=cockpit.service user-runtime-dir@${PI_UID}.service
 Wants=cockpit.service
 
 [Service]
@@ -174,7 +173,7 @@ Restart=on-failure
 RestartSec=3
 
 [Install]
-WantedBy=graphical.target
+WantedBy=multi-user.target
 EOF
 
 # Remove any framebuffer-copy service from the earlier mirrored-screen setup.
