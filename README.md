@@ -14,7 +14,7 @@ Mock mode is enabled by `mock_mode: true` in `backend/config.json`. Arrow keys n
 
 ## Raspberry Pi
 
-Use Raspberry Pi OS 64-bit with a desktop session. Set up the TFT driver first, reboot, then run the included setup script from the repository root. It builds the UI, creates the Python venv, installs the DHT22 driver, enables real GPIO mode, installs the backend service, and configures Chromium kiosk autostart to open Cockpit at `/` after desktop login.
+Use Raspberry Pi OS 64-bit. The setup script installs the desktop packages when starting from Raspberry Pi OS Lite (Trixie or Bookworm), selects desktop boot, then builds the UI, creates the Python venv, installs the DHT22 driver, enables real GPIO mode, installs the backend service, and configures Chromium kiosk autostart to open Cockpit at `/` after desktop login. Set up the TFT driver first, then pull the latest repository and rerun the script.
 
 ### TFT display, joystick, buttons, and DHT22
 

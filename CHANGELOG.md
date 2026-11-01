@@ -1,5 +1,9 @@
 # Changelog
 
+## Raspberry Pi OS Trixie desktop boot fix
+
+- Fixed the Pi setup flow for Raspberry Pi OS Lite: it now installs the Trixie Wayland desktop packages (or Bookworm desktop packages), selects the release-appropriate desktop boot mode, and enables graphical startup before installing kiosk autostart.
+
 ## Raspberry Pi 4 TFT and GPIO setup
 
 - Identified the pictured display as the MPI3501-style 480 × 320 SPI panel with ILI9486 display controller and XPT2046 touch controller; documented the vendor `LCD35-show` driver and first-boot sequence.

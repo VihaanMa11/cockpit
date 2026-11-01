@@ -6,6 +6,7 @@ BACKEND="$ROOT/backend"
 FRONTEND="$ROOT/frontend"
 PI_USER="$(id -un)"
 PI_HOME="$(getent passwd "$PI_USER" | cut -d: -f6)"
+OS_CODENAME="$(. /etc/os-release && printf '%s' "${VERSION_CODENAME:-}")"
 
 if [[ ! -f "$BACKEND/main.py" || ! -f "$FRONTEND/package.json" ]]; then
   echo "Run this script from a Cockpit checkout (scripts/setup-pi.sh)." >&2
@@ -14,7 +15,22 @@ fi
 
 echo "Installing Cockpit dependencies for $PI_USER..."
 sudo apt update
-sudo apt install -y python3-full python3-venv python3-lgpio nodejs npm chromium
+case "$OS_CODENAME" in
+  trixie)
+    # Raspberry Pi OS 13 split the desktop into these Wayland meta-packages.
+    GUI_PACKAGES=(rpd-wayland-core rpd-theme)
+    BOOT_MODE="B2"
+    ;;
+  bookworm)
+    GUI_PACKAGES=(raspberrypi-ui-mods lightdm)
+    BOOT_MODE="B4"
+    ;;
+  *)
+    echo "Unsupported Raspberry Pi OS release '$OS_CODENAME'. Install its desktop environment first, then rerun this script." >&2
+    exit 1
+    ;;
+esac
+sudo apt install -y python3-full python3-venv python3-lgpio nodejs npm chromium "${GUI_PACKAGES[@]}"
 
 python3 -m venv --system-site-packages "$BACKEND/.venv"
 "$BACKEND/.venv/bin/python" -m pip install --upgrade pip
@@ -83,9 +99,11 @@ for autostart in "$PI_HOME/.config/labwc/autostart" "$PI_HOME/.config/lxsession/
   chown "$PI_USER":"$(id -gn "$PI_USER")" "$autostart"
 done
 
+sudo systemctl set-default graphical.target
 if command -v raspi-config >/dev/null 2>&1; then
-  sudo raspi-config nonint do_boot_behaviour B4 || true
+  sudo raspi-config nonint do_boot_behaviour "$BOOT_MODE" || true
 fi
+sudo systemctl enable lightdm || true
 
 sudo systemctl daemon-reload
 sudo systemctl enable --now cockpit
