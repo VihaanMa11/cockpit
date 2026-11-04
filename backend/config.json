@@ -46,7 +46,7 @@
       "tasks": "run_workflow"
     },
     "run": {
-      "home": "none",
+      "home": "run_workflow",
       "music": "play_pause",
       "agents": "run_workflow",
       "tasks": "run_workflow"
