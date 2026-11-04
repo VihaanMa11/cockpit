@@ -66,7 +66,7 @@ class Connections:
 manager = Connections()
 hardware = Hardware(config)
 music = Music(mock=config.get("mock_mode", True), config=config.get("music"))
-sensors = Sensors(mock=config.get("mock_mode", True), gpio=config.get("sensors", {}).get("dht22_gpio", 4), stale_seconds=config.get("sensors", {}).get("stale_seconds", 30))
+sensors = Sensors(mock=config.get("mock_mode", True), gpio=config.get("sensors", {}).get("dht_gpio", config.get("sensors", {}).get("dht22_gpio", 4)), stale_seconds=config.get("sensors", {}).get("stale_seconds", 30), sensor_type=config.get("sensors", {}).get("type", "auto"))
 
 
 def resolve_input_action(event, screen, mapping):

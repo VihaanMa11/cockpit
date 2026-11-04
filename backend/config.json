@@ -101,6 +101,8 @@
     "requires_stack_through_header": true
   },
   "sensors": {
+    "type": "auto",
+    "dht_gpio": 4,
     "dht22_gpio": 4,
     "stale_seconds": 30
   },
