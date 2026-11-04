@@ -16,16 +16,19 @@ class Hardware:
 
     def start(self, loop, on_event):
         self._loop, self._on_event = loop, on_event
-        if self.config.get("mock_mode", True):
+        # If mock_mode is explicitly set to true in config.json, stay in mock mode
+        if self.config.get("mock_mode") is True:
             self.mode = "mock"
+            logger.info("hardware: mock mode explicitly enabled via config.json")
             return
+
         try:
             self._start_real()
             self.mode = "real"
-            logger.info("hardware: gpiozero + lgpio ready")
+            logger.info("hardware: gpiozero ready with %d button(s)", len(self.devices))
         except Exception as exc:
             self.mode = "mock"
-            logger.warning("hardware unavailable (%s); using mock inputs", exc)
+            logger.warning("hardware unavailable (%s); falling back to mock inputs", exc)
 
     def stop(self):
         for device in self.devices:
@@ -37,9 +40,15 @@ class Hardware:
 
     def _start_real(self):
         from gpiozero import Button
-        from gpiozero.pins.lgpio import LGPIOFactory
+        factory = None
+        try:
+            from gpiozero.pins.lgpio import LGPIOFactory
+            factory = LGPIOFactory()
+            logger.info("hardware: using LGPIOFactory for Pi GPIO")
+        except Exception as exc:
+            logger.warning("hardware: LGPIOFactory unavailable (%s), trying default factory", exc)
+            factory = None
 
-        factory = LGPIOFactory()
         debounce = float(self.config.get("button_debounce", 0.05))
 
         # Register all configured physical buttons
@@ -52,10 +61,32 @@ class Hardware:
         from gpiozero import Button
         if event not in EVENTS:
             raise ValueError(f"Unsupported input event {event}")
-        device = Button(pin, pull_up=True, bounce_time=debounce, hold_time=0.25, hold_repeat=True, pin_factory=factory)
-        device.when_pressed = lambda event=event: self._emit(event, False)
+
+        kwargs = {
+            "pull_up": True,
+            "bounce_time": debounce,
+            "hold_time": 0.25,
+            "hold_repeat": True,
+        }
+        if factory is not None:
+            kwargs["pin_factory"] = factory
+
+        device = Button(pin, **kwargs)
+
+        # IMPORTANT: gpiozero passes the Device instance to callbacks if the handler accepts arguments.
+        # We define closures taking *args to discard whatever gpiozero passes and emit our target event.
+        def on_press(*args):
+            logger.info("hardware: physical press on GPIO%d -> event '%s'", pin, event)
+            self._emit(event, False)
+
+        def on_hold(*args):
+            logger.info("hardware: physical hold on GPIO%d -> event '%s'", pin, event)
+            self._emit(event, True)
+
+        device.when_pressed = on_press
         if event in ("up", "down"):
-            device.when_held = lambda event=event: self._emit(event, True)
+            device.when_held = on_hold
+
         self.devices.append(device)
         logger.info("hardware: watching GPIO%d for '%s' event (pull_up=True)", pin, event)
 

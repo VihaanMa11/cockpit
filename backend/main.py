@@ -145,6 +145,7 @@ async def dispatch_action(action):
 
 
 async def handle_input(event, repeat=False):
+    logger.info("input received: event='%s', repeat=%s", event, repeat)
     if event not in EVENTS:
         return
     if repeat and not (event in ("up", "down") and state["screen_index"] == 1):
