@@ -1,4 +1,4 @@
-"""Configurable GPIO input adapter; all physical inputs emit common events."""
+"""Configurable GPIO input adapter; all physical buttons emit digital events."""
 import asyncio
 import logging
 
@@ -27,16 +27,26 @@ class Hardware:
             self.mode = "mock"
             logger.warning("hardware unavailable (%s); using mock inputs", exc)
 
+    def stop(self):
+        for device in self.devices:
+            try:
+                device.close()
+            except Exception:
+                pass
+        self.devices.clear()
+
     def _start_real(self):
         from gpiozero import Button
         from gpiozero.pins.lgpio import LGPIOFactory
 
         factory = LGPIOFactory()
-        debounce = float(self.config.get("joystick", {}).get("bounce_time", 0.05))
-        for button in self.config.get("buttons", {}).values():
-            self._watch(factory, int(button["pin"]), button["event"], debounce)
-        for event, pin in self.config.get("joystick", {}).get("pins", {}).items():
-            self._watch(factory, int(pin), event, debounce)
+        debounce = float(self.config.get("button_debounce", 0.05))
+
+        # Register all configured physical buttons
+        for key, button in self.config.get("buttons", {}).items():
+            pin = int(button["pin"])
+            event = button["event"]
+            self._watch(factory, pin, event, debounce)
 
     def _watch(self, factory, pin, event, debounce):
         from gpiozero import Button
@@ -47,9 +57,11 @@ class Hardware:
         if event in ("up", "down"):
             device.when_held = lambda event=event: self._emit(event, True)
         self.devices.append(device)
+        logger.info("hardware: watching GPIO%d for '%s' event (pull_up=True)", pin, event)
 
     def _emit(self, event, repeat):
-        asyncio.run_coroutine_threadsafe(self._on_event(event, repeat=repeat), self._loop)
+        if self._loop and self._on_event:
+            asyncio.run_coroutine_threadsafe(self._on_event(event, repeat=repeat), self._loop)
 
     async def mock_event(self, event):
         if self.mode != "mock":

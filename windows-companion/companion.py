@@ -140,7 +140,7 @@ def fetch_commands(config):
         method="GET",
     )
     with urllib.request.urlopen(request, timeout=5) as response:
-        return json.loads(response.read().decode("utf-8")).get("commands", [])
+        return json.loads(response.read().decode("utf-8"))
 
 
 def adjust_windows_volume(direction):
@@ -190,11 +190,14 @@ async def run():
                     "title": "", "artist": "", "album": "", "duration": 0, "elapsed": 0,
                     "artwork_b64": None, "artwork_mime": None, "artwork_hash": "",
                 }
+            request_artwork = False
             try:
-                commands = fetch_commands(config)
+                command_state = fetch_commands(config)
+                commands = command_state.get("commands", [])
                 session = next((s for s in manager.get_sessions()
                                 if "spotify" in str(s.source_app_user_model_id or "").casefold()), None)
                 await apply_commands(session, commands)
+                request_artwork = bool(command_state.get("request_artwork"))
             except urllib.error.HTTPError as exc:
                 if time.monotonic() - last_warning > 20:
                     log.warning("Cockpit command endpoint returned HTTP %s.", exc.code)
@@ -205,7 +208,7 @@ async def run():
                     last_warning = time.monotonic()
             signature = tuple(payload.get(key) for key in ("active", "status", "title", "artist", "album", "duration", "artwork_hash"))
             # Send progress every ~1.5 seconds; attach image bytes only when the image changes.
-            if signature == previous_signature:
+            if signature == previous_signature and not request_artwork:
                 payload["artwork_b64"] = None
                 payload["artwork_mime"] = None
             try:

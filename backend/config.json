@@ -1,53 +1,196 @@
 {
   "mock_mode": true,
+  "button_debounce": 0.05,
   "buttons": {
-    "1": { "label": "RUN", "event": "run", "pin": 5 },
-    "2": { "label": "APPROVE", "event": "approve", "pin": 6 },
-    "3": { "label": "STOP", "event": "stop", "pin": 13 },
-    "4": { "label": "VOICE", "event": "voice", "pin": 16 }
-  },
-  "joystick": {
-    "type": "digital-5-way",
-    "pins": { "up": 18, "down": 19, "left": 20, "right": 21, "press": 22 },
-    "bounce_time": 0.05
+    "1": {
+      "label": "SCREEN",
+      "event": "right",
+      "pin": 19
+    },
+    "2": {
+      "label": "SCROLL",
+      "event": "down",
+      "pin": 20
+    },
+    "3": {
+      "label": "SELECT",
+      "event": "run",
+      "pin": 21
+    }
   },
   "input_mapping": {
-    "left": { "action": "navigate", "delta": -1 },
-    "right": { "action": "navigate", "delta": 1 },
-    "up": { "home": "none", "music": "volume_up", "agents": "select_prev" },
-    "down": { "home": "none", "music": "volume_down", "agents": "select_next" },
-    "press": { "home": "none", "music": "play_pause", "agents": "run_workflow" },
-    "run": { "home": "none", "music": "play_pause", "agents": "run_workflow" },
-    "approve": { "home": "none", "music": "next_track", "agents": "run_workflow" },
-    "stop": { "home": "none", "music": "previous_track", "agents": "none" },
-    "voice": { "home": "none", "music": "none", "agents": "none" }
+    "left": {
+      "action": "navigate",
+      "delta": -1
+    },
+    "right": {
+      "action": "navigate",
+      "delta": 1
+    },
+    "up": {
+      "home": "none",
+      "music": "volume_up",
+      "agents": "select_prev",
+      "tasks": "select_prev"
+    },
+    "down": {
+      "home": "none",
+      "music": "volume_down",
+      "agents": "select_next",
+      "tasks": "select_next"
+    },
+    "press": {
+      "home": "none",
+      "music": "play_pause",
+      "agents": "run_workflow",
+      "tasks": "run_workflow"
+    },
+    "run": {
+      "home": "none",
+      "music": "play_pause",
+      "agents": "run_workflow",
+      "tasks": "run_workflow"
+    },
+    "approve": {
+      "home": "none",
+      "music": "next_track",
+      "agents": "run_workflow",
+      "tasks": "run_workflow"
+    },
+    "stop": {
+      "home": "none",
+      "music": "previous_track",
+      "agents": "none",
+      "tasks": "none"
+    },
+    "voice": {
+      "home": "none",
+      "music": "none",
+      "agents": "none",
+      "tasks": "none"
+    }
   },
-  "ui": { "wallpaper": "/static/wallpapers/default.svg", "clock_24h": false },
-  "music": { "auto_open": true, "poll_seconds": 1.5, "mock_track_seconds": 210 },
+  "ui": {
+    "wallpaper": "/static/wallpapers/default.svg",
+    "clock_24h": false
+  },
+  "music": {
+    "auto_open": true,
+    "poll_seconds": 1.5,
+    "mock_track_seconds": 210
+  },
   "display": {
     "model": "MPI3501",
-    "resolution": [480, 320],
+    "resolution": [
+      480,
+      320
+    ],
     "rotation": 90,
     "overlay": "tft35a",
     "touch_controller": "XPT2046",
-    "conflicting_gpio": [7, 8, 9, 10, 11, 17, 24, 25],
+    "conflicting_gpio": [
+      7,
+      8,
+      9,
+      10,
+      11,
+      17,
+      24,
+      25
+    ],
     "requires_stack_through_header": true
   },
-  "sensors": { "dht22_gpio": 4, "stale_seconds": 30 },
+  "sensors": {
+    "dht22_gpio": 4,
+    "stale_seconds": 30
+  },
   "workflows": [
-    { "label": "Approve current step", "description": "Approve the pending agent step", "category": "Agent", "webhook": "http://localhost:5678/webhook/agent-approve", "method": "POST" },
-    { "label": "Summarise session", "description": "Create a concise session summary", "category": "Agent", "webhook": "http://localhost:5678/webhook/agent-summary", "method": "POST" },
-    { "label": "Hermes: daily digest", "category": "Hermes", "webhook": "http://localhost:5678/webhook/hermes-digest", "method": "POST" },
-    { "label": "Hermes: inbox triage", "category": "Hermes", "webhook": "http://localhost:5678/webhook/hermes-inbox", "method": "POST" },
-    { "label": "Hermes: PO extract", "category": "Hermes", "webhook": "http://localhost:5678/webhook/hermes-po", "method": "POST" },
-    { "label": "Hermes: standup note", "category": "Hermes", "webhook": "http://localhost:5678/webhook/hermes-standup", "method": "POST" },
-    { "label": "Email filtering", "description": "Run Gmail auto-sort", "category": "n8n", "webhook": "https://n8n.vihaanprtf.tech/webhook/gmail-auto-sort-run", "method": "POST" },
-    { "label": "Workflow B", "category": "n8n", "webhook": "http://localhost:5678/webhook/workflow-b", "method": "POST" },
-    { "label": "Dummy task 1", "category": "Tasks", "webhook": "http://localhost:5678/webhook/tasks-dummy-1", "method": "POST" },
-    { "label": "Dummy task 2", "category": "Tasks", "webhook": "http://localhost:5678/webhook/tasks-dummy-2", "method": "POST" },
-    { "label": "Dummy task 3", "category": "Tasks", "webhook": "http://localhost:5678/webhook/tasks-dummy-3", "method": "POST" },
-    { "label": "Demo success", "category": "Demo", "webhook": "mock://success", "method": "POST" },
-    { "label": "Demo failure", "category": "Demo", "webhook": "mock://failure", "method": "POST" },
-    { "label": "Demo timeout", "category": "Demo", "webhook": "mock://timeout", "method": "POST" }
+    {
+      "label": "Approve current step",
+      "description": "Approve the pending agent step",
+      "category": "Agent",
+      "webhook": "http://localhost:5678/webhook/agent-approve",
+      "method": "POST"
+    },
+    {
+      "label": "Summarise session",
+      "description": "Create a concise session summary",
+      "category": "Agent",
+      "webhook": "http://localhost:5678/webhook/agent-summary",
+      "method": "POST"
+    },
+    {
+      "label": "Hermes: daily digest",
+      "category": "Hermes",
+      "webhook": "http://localhost:5678/webhook/hermes-digest",
+      "method": "POST"
+    },
+    {
+      "label": "Hermes: inbox triage",
+      "category": "Hermes",
+      "webhook": "http://localhost:5678/webhook/hermes-inbox",
+      "method": "POST"
+    },
+    {
+      "label": "Hermes: PO extract",
+      "category": "Hermes",
+      "webhook": "http://localhost:5678/webhook/hermes-po",
+      "method": "POST"
+    },
+    {
+      "label": "Hermes: standup note",
+      "category": "Hermes",
+      "webhook": "http://localhost:5678/webhook/hermes-standup",
+      "method": "POST"
+    },
+    {
+      "label": "Email filtering",
+      "description": "Run Gmail auto-sort",
+      "category": "n8n",
+      "webhook": "https://n8n.vihaanprtf.tech/webhook/gmail-auto-sort-run",
+      "method": "POST"
+    },
+    {
+      "label": "Workflow B",
+      "category": "n8n",
+      "webhook": "http://localhost:5678/webhook/workflow-b",
+      "method": "POST"
+    },
+    {
+      "label": "Dummy task 1",
+      "category": "Tasks",
+      "webhook": "http://localhost:5678/webhook/tasks-dummy-1",
+      "method": "POST"
+    },
+    {
+      "label": "Dummy task 2",
+      "category": "Tasks",
+      "webhook": "http://localhost:5678/webhook/tasks-dummy-2",
+      "method": "POST"
+    },
+    {
+      "label": "Dummy task 3",
+      "category": "Tasks",
+      "webhook": "http://localhost:5678/webhook/tasks-dummy-3",
+      "method": "POST"
+    },
+    {
+      "label": "Demo success",
+      "category": "Demo",
+      "webhook": "mock://success",
+      "method": "POST"
+    },
+    {
+      "label": "Demo failure",
+      "category": "Demo",
+      "webhook": "mock://failure",
+      "method": "POST"
+    },
+    {
+      "label": "Demo timeout",
+      "category": "Demo",
+      "webhook": "mock://timeout",
+      "method": "POST"
+    }
   ]
 }

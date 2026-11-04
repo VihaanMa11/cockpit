@@ -20,18 +20,19 @@ Use Raspberry Pi OS 64-bit. The setup script installs the desktop packages when 
 
 The photo matches the MPI3501-style 3.5-inch RPi Display (480 × 320, ILI9486 display controller, XPT2046 resistive touch). Its SPI/touch overlay uses GPIO7–11, GPIO17, GPIO24, and GPIO25. The old joystick map used GPIO17 and GPIO24, which conflict with the screen, so the current map is:
 
-| Control | BCM GPIO | Physical pin |
-| --- | ---: | ---: |
-| Joystick up | 18 | 12 |
-| Joystick down | 19 | 35 |
-| Joystick left | 20 | 38 |
-| Joystick right | 21 | 40 |
-| Joystick press | 22 | 15 |
-| RUN button | 5 | 29 |
-| APPROVE button | 6 | 31 |
-| STOP button | 13 | 33 |
-| VOICE button | 16 | 36 |
-| DHT22 data | 4 | 7 |
+| Control / Peripheral | BCM GPIO | Physical pin | Function / Wiring |
+| --- | ---: | ---: | --- |
+| SCREEN Button | GPIO19 | 35 | Cycle 4 screens: Home → Music → Agents → Tasks (GND on Pin 34) |
+| SCROLL Button | GPIO20 | 38 | Scroll agent / task lists down with wrap (GND on Pin 34) |
+| SELECT / RUN Button | GPIO21 | 40 | Run highlighted agent / Confirm task done (GND on Pin 34) |
+| DHT22 Sensor (Data) | GPIO4 | 7 | 3.3V (Pin 1/17), Data (Pin 7), GND (Pin 9) with 4.7kΩ pull-up |
+| RFID RC522 (SDA/CS) | GPIO7 | 26 | SPI0 CE1 (Dedicated Chip Select) |
+| RFID RC522 (MOSI) | GPIO10 | 19 | SPI0 MOSI (Shared SPI line) |
+| RFID RC522 (MISO) | GPIO9 | 21 | SPI0 MISO (Shared SPI line) |
+| RFID RC522 (SCK) | GPIO11 | 23 | SPI0 SCLK (Shared SPI line) |
+| RFID RC522 (RST) | GPIO26 | 37 | Dedicated reset line (3.3V power on Pin 1/17) |
+
+Cockpit uses a 3-button digital navigation scheme: Button 1 cycles between tabs, Button 2 moves down lists (wrapping back to the top), and Button 3 executes or completes the selection. All buttons share a single common ground wire (daisy-chain) tied to Pin 34 (GND).
 
 Use BCM numbering in `backend/config.json`; do not confuse BCM GPIO numbers with physical header pin numbers. **The display covers the first 26 physical pins.** To use the joystick, buttons, and DHT22 with the screen attached, fit a 40-pin stack-through/extended header or equivalent GPIO breakout that exposes the Pi pins while the TFT is mounted. Do not connect an input to GPIO7–11, 17, 24, or 25; those belong to the TFT/touch interface. The DHT22 needs 3.3 V, ground, data on GPIO4, and a 4.7–10 kΩ pull-up between data and 3.3 V if the sensor board does not include one.
 

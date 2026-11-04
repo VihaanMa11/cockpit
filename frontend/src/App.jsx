@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import useCockpitSocket from "./hooks/useCockpitSocket";
 
-const SCREEN_NAMES = ["Home", "Music", "Agents"];
+const SCREEN_NAMES = ["Home", "Music", "Agents", "Tasks"];
 const pad = (n) => String(n).padStart(2, "0");
-const formatTime = (seconds = 0) => `${Math.floor(seconds / 60)}:${pad(Math.floor(seconds % 60))}`;
+const formatTime = (seconds = 0) => {
+  const safeSeconds = Number.isFinite(Number(seconds)) ? Math.max(0, Math.floor(Number(seconds))) : 0;
+  return `${pad(Math.floor(safeSeconds / 60))}:${pad(safeSeconds % 60)}`;
+};
 
 function sendEvent(event) {
   const localKiosk = ["127.0.0.1", "localhost"].includes(window.location.hostname) && window.location.port === "8000";
@@ -84,10 +87,15 @@ function Home({ config, sensors }) {
 
 function MusicScreen({ music }) {
   const playing = music.status === "playing";
+  const [artworkFailed, setArtworkFailed] = useState(false);
+  useEffect(() => { setArtworkFailed(false); }, [music.art_url]);
   const discRef = useRef(null);
   const angleRef = useRef(0);
   const frameRef = useRef(null);
   const wasPlayingRef = useRef(false);
+  const volumeValueRef = useRef(music.volume ?? 0);
+  const lastVolumeTargetRef = useRef(null);
+  useEffect(() => { if (music.volume != null) volumeValueRef.current = music.volume; }, [music.volume]);
   useEffect(() => {
     if (frameRef.current) cancelAnimationFrame(frameRef.current);
     const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
@@ -125,14 +133,17 @@ function MusicScreen({ music }) {
   const setVolumeAtPointer = (event) => {
     const bounds = event.currentTarget.getBoundingClientRect();
     const target = Math.max(0, Math.min(1, (event.clientX - bounds.left) / bounds.width));
-    const steps = Math.round(Math.abs(target - (music.volume ?? 0)) / 0.05);
-    const direction = target > (music.volume ?? 0) ? "up" : "down";
+    const previous = lastVolumeTargetRef.current ?? volumeValueRef.current;
+    const steps = Math.floor(Math.abs(target - previous) / 0.05);
+    const direction = target > previous ? "up" : "down";
     for (let step = 0; step < steps; step += 1) sendEvent(direction);
+    lastVolumeTargetRef.current = target;
+    volumeValueRef.current = target;
   };
   return <section className="screen music-screen">
     <div className="screen-title"><span>MUSIC</span><span className={playing ? "playing-label" : "idle-label"}>{playing ? "PLAYING" : music.active ? "PAUSED" : "NO PLAYER"}</span></div>
     <div className="music-hero">
-      <div className={`disc-wrap ${playing ? "is-playing" : ""}`}><div className="record-glow"/><div ref={discRef} className="disc"><div className="disc-art">{music.art_url ? <img src={music.art_url} alt="Album artwork" /> : <div className="generic-art"><Glyph name="mountain" size={34}/><span>COCKPIT</span></div>}</div><div className="disc-hole" /></div></div>
+      <div className={`disc-wrap ${playing ? "is-playing" : ""}`}><div className="record-glow"/><div ref={discRef} className="disc"><div className="disc-art">{music.art_url && !artworkFailed ? <img key={music.art_url} src={music.art_url} alt="Album artwork" decoding="async" onError={() => setArtworkFailed(true)} /> : <div className="generic-art"><Glyph name="mountain" size={34}/><span>{artworkFailed ? "ART UNAVAILABLE" : "COCKPIT"}</span></div>}</div><div className="disc-hole" /></div></div>
       <div className="track-info">
         <div className={`now-playing ${playing ? "live" : ""}`}><Glyph name="bars" size={19}/><span>{playing ? "NOW PLAYING" : music.active ? "ON PAUSE" : "READY WHEN YOU ARE"}</span></div>
         <div className="track-title">{music.active ? music.title : "Nothing playing"}</div>
@@ -142,7 +153,7 @@ function MusicScreen({ music }) {
     </div>
     <div className="music-progress"><div className="progress"><div style={{ width: `${pct}%` }} /></div><div className="time-row"><span>{formatTime(elapsed)}</span><span>{formatTime(duration)}</span></div></div>
     <div className="music-controls">
-      <div className="volume-control"><Glyph name="volume" size={23}/><div className="volume-track" role="slider" tabIndex={0} aria-label="Volume" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round((music.volume ?? 0) * 100)} onClick={setVolumeAtPointer}><i style={{ width: `${Math.max(0, Math.min(100, (music.volume ?? 0) * 100))}%` }}/><span className="volume-knob" style={{ left: `${Math.max(0, Math.min(100, (music.volume ?? 0) * 100))}%` }}/></div><b>{music.volume == null ? "--%" : `${Math.round(music.volume * 100)}%`}</b></div>
+      <div className="volume-control"><Glyph name="volume" size={23}/><div className="volume-track" role="slider" tabIndex={0} aria-label="Volume" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round((music.volume ?? 0) * 100)} onPointerDown={(event) => { event.currentTarget.setPointerCapture(event.pointerId); lastVolumeTargetRef.current = null; setVolumeAtPointer(event); }} onPointerMove={(event) => { if (event.buttons) setVolumeAtPointer(event); }} onPointerUp={() => { lastVolumeTargetRef.current = null; }} onKeyDown={(event) => { if (!["ArrowLeft", "ArrowDown", "ArrowRight", "ArrowUp", "Home", "End"].includes(event.key)) return; event.preventDefault(); const current = music.volume ?? volumeValueRef.current; const target = event.key === "Home" ? 0 : event.key === "End" ? 1 : Math.max(0, Math.min(1, current + (["ArrowRight", "ArrowUp"].includes(event.key) ? 0.05 : -0.05))); const steps = Math.round(Math.abs(target - current) / 0.05); for (let step = 0; step < steps; step += 1) sendEvent(target > current ? "up" : "down"); volumeValueRef.current = target; }}><i style={{ width: `${Math.max(0, Math.min(100, (music.volume ?? 0) * 100))}%` }}/><span className="volume-knob" style={{ left: `${Math.max(0, Math.min(100, (music.volume ?? 0) * 100))}%` }}/></div><b>{music.volume == null ? "--%" : `${Math.round(music.volume * 100)}%`}</b></div>
       <div className="transport">
         <button onClick={() => sendEvent("stop")} aria-label="Previous track"><Glyph name="previous" size={24}/></button>
         <button className="primary-transport" onClick={() => sendEvent("run")} aria-label={playing ? "Pause" : "Play"}><Glyph name={playing ? "pause" : "play"} size={28}/></button>
@@ -180,6 +191,39 @@ function Agents({ workflows = [], states = [], selection = 0, onSelect }) {
   </section>;
 }
 
+function Tasks({ workflows = [], states = [], selection = 0, onSelect }) {
+  const taskWorkflows = useMemo(() => {
+    const filtered = workflows.map((wf, i) => ({ ...wf, originalIndex: i })).filter((wf) => wf.category === "Tasks");
+    return filtered.length > 0 ? filtered : workflows.map((wf, i) => ({ ...wf, originalIndex: i }));
+  }, [workflows]);
+  const activeSelection = selection % Math.max(1, taskWorkflows.length);
+  const selected = taskWorkflows[activeSelection];
+  return (
+    <section className="screen agents-screen">
+      <div className="screen-title"><span>ACTIVE TASKS</span><span>{taskWorkflows.length} TASKS</span></div>
+      <div className="agent-list">
+        {taskWorkflows.map((item, idx) => {
+          const status = states[item.originalIndex] || { status: "idle" };
+          const isSelected = idx === activeSelection;
+          return (
+            <button key={`task-${item.label}-${idx}`} type="button" className={`agent-row ${isSelected ? "selected" : ""}`} onClick={() => onSelect(item.originalIndex)}>
+              <span className={`status-dot ${status.status === "success" ? "success" : "idle"}`} />
+              <div className="agent-copy">
+                <b>{item.label}</b>
+                <small>{status.status === "success" ? "✓ COMPLETED" : "PENDING ACTION"}</small>
+              </div>
+              <span className={`agent-state ${status.status === "success" ? "success" : "idle"}`}>
+                {status.status === "success" ? "DONE" : "TODO"}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      <Hints><span>◀ / ▶ SCREEN</span><span>↑ / ↓ SCROLL</span><button type="button" className="touch-run" onClick={() => sendEvent("run")}>MARK DONE / RUN</button></Hints>
+    </section>
+  );
+}
+
 export default function App() {
   const [config, setConfig] = useState(null);
   const { state, connected } = useCockpitSocket();
@@ -211,6 +255,7 @@ export default function App() {
       {screen === 0 && <Home config={config} sensors={state.sensors || {}} />}
       {screen === 1 && <MusicScreen music={state.music || {}} />}
       {screen === 2 && <Agents workflows={workflows} states={state.workflows} selection={state.selection_index || 0} onSelect={selectWorkflow} />}
+      {screen === 3 && <Tasks workflows={workflows} states={state.workflows} selection={state.selection_index || 0} onSelect={selectWorkflow} />}
     </div>
     <Dots active={screen} />
   </main>;

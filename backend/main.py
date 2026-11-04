@@ -115,8 +115,12 @@ async def run_workflow(index):
     await broadcast()
 
 
+SCREENS = ("home", "music", "agents", "tasks")
+SCREEN_LABELS = ("Home", "Music", "Agents", "Tasks")
+
+
 async def dispatch_action(action):
-    screen = ("home", "music", "agents")[state["screen_index"]]
+    screen = SCREENS[state["screen_index"] % len(SCREENS)]
     if action == "none" or not action:
         return
     if action == "select_prev":
@@ -148,11 +152,11 @@ async def handle_input(event, repeat=False):
     mapping = config.get("input_mapping", {}).get(event, {})
     if event in ("left", "right"):
         delta = int(mapping.get("delta", -1 if event == "left" else 1))
-        state["screen_index"] = (state["screen_index"] + delta) % 3
+        state["screen_index"] = (state["screen_index"] + delta) % len(SCREENS)
         state["selection_index"] = 0
-        push_event("screen", ("Home", "Music", "Agents")[state["screen_index"]])
+        push_event("screen", SCREEN_LABELS[state["screen_index"]])
     else:
-        screen = ("home", "music", "agents")[state["screen_index"]]
+        screen = SCREENS[state["screen_index"] % len(SCREENS)]
         await dispatch_action(resolve_input_action(event, screen, config.get("input_mapping", {})))
     await broadcast()
 
@@ -182,8 +186,7 @@ async def lifespan(app):
     task = asyncio.create_task(live_updates())
     yield
     task.cancel()
-    for device in hardware.devices:
-        device.close()
+    hardware.stop()
 
 
 app = FastAPI(lifespan=lifespan)
@@ -235,7 +238,7 @@ async def local_kiosk_event(event: str, request: Request):
 @app.post("/api/local/screen/{screen_index}")
 async def local_kiosk_screen(screen_index: int, request: Request):
     require_local_kiosk(request)
-    if screen_index not in (0, 1, 2):
+    if screen_index not in range(len(SCREENS)):
         raise HTTPException(status_code=400, detail="screen index must be 0, 1, or 2")
     state["screen_index"] = screen_index
     state["selection_index"] = 0
@@ -336,7 +339,16 @@ async def companion_music_commands(request: Request):
         raise HTTPException(status_code=401, detail="Invalid Cockpit companion token")
     commands = remote_music["commands"]
     remote_music["commands"] = []
-    return {"commands": commands}
+    return {
+        "commands": commands,
+        # A restarted Cockpit process loses its in-memory artwork URL. Ask the
+        # still-running laptop bridge to resend the current cover in that case.
+        "request_artwork": bool(
+            remote_music["state"]
+            and remote_music["state"].get("active")
+            and not remote_music["art_url"]
+        ),
+    }
 
 
 @app.post("/api/dev/event/{event}")
@@ -353,7 +365,7 @@ async def dev_event(event: str):
 async def dev_screen(screen_index: int):
     if state["mode"] != "mock":
         raise HTTPException(status_code=403, detail="mock controls only")
-    if screen_index not in (0, 1, 2):
+    if screen_index not in range(len(SCREENS)):
         raise HTTPException(status_code=400, detail="screen index must be 0, 1, or 2")
     state["screen_index"] = screen_index
     state["selection_index"] = 0

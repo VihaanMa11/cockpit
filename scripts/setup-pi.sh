@@ -30,7 +30,7 @@ case "$OS_CODENAME" in
     exit 1
     ;;
 esac
-sudo apt install -y python3-full python3-venv python3-lgpio nodejs chromium playerctl pulseaudio-utils xinit xserver-xorg-core xserver-xorg-video-fbdev x11-xserver-utils xauth dbus-x11 "${GUI_PACKAGES[@]}"
+sudo apt install -y python3-full python3-venv python3-lgpio i2c-tools python3-smbus nodejs chromium playerctl pulseaudio-utils xinit xserver-xorg-core xserver-xorg-video-fbdev x11-xserver-utils xauth dbus-x11 "${GUI_PACKAGES[@]}"
 
 if ! command -v npm >/dev/null 2>&1; then
   echo "npm was not found. Install Node.js with its bundled npm, then rerun this script." >&2
@@ -53,12 +53,11 @@ from pathlib import Path
 path = Path(sys.argv[1])
 config = json.loads(path.read_text(encoding="utf-8"))
 config["mock_mode"] = False
-config.setdefault("joystick", {})["pins"] = {
-    "up": 18,
-    "down": 19,
-    "left": 20,
-    "right": 21,
-    "press": 22,
+config.pop("joystick", None)
+config["buttons"] = {
+    "1": {"label": "SCREEN", "event": "right", "pin": 19},
+    "2": {"label": "SCROLL", "event": "down", "pin": 20},
+    "3": {"label": "SELECT", "event": "run", "pin": 21},
 }
 config.setdefault("sensors", {})["dht22_gpio"] = 4
 path.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
