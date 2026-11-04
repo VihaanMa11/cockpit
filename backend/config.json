@@ -108,91 +108,12 @@
   },
   "workflows": [
     {
-      "label": "Approve current step",
-      "description": "Approve the pending agent step",
-      "category": "Agent",
-      "webhook": "http://localhost:5678/webhook/agent-approve",
-      "method": "POST"
-    },
-    {
-      "label": "Summarise session",
-      "description": "Create a concise session summary",
-      "category": "Agent",
-      "webhook": "http://localhost:5678/webhook/agent-summary",
-      "method": "POST"
-    },
-    {
-      "label": "Hermes: daily digest",
-      "category": "Hermes",
-      "webhook": "http://localhost:5678/webhook/hermes-digest",
-      "method": "POST"
-    },
-    {
-      "label": "Hermes: inbox triage",
-      "category": "Hermes",
-      "webhook": "http://localhost:5678/webhook/hermes-inbox",
-      "method": "POST"
-    },
-    {
-      "label": "Hermes: PO extract",
-      "category": "Hermes",
-      "webhook": "http://localhost:5678/webhook/hermes-po",
-      "method": "POST"
-    },
-    {
-      "label": "Hermes: standup note",
-      "category": "Hermes",
-      "webhook": "http://localhost:5678/webhook/hermes-standup",
-      "method": "POST"
-    },
-    {
-      "label": "Email filtering",
-      "description": "Run Gmail auto-sort",
-      "category": "n8n",
-      "webhook": "https://n8n.vihaanprtf.tech/webhook/gmail-auto-sort-run",
-      "method": "POST"
-    },
-    {
-      "label": "Workflow B",
-      "category": "n8n",
-      "webhook": "http://localhost:5678/webhook/workflow-b",
-      "method": "POST"
-    },
-    {
-      "label": "Dummy task 1",
-      "category": "Tasks",
-      "webhook": "http://localhost:5678/webhook/tasks-dummy-1",
-      "method": "POST"
-    },
-    {
-      "label": "Dummy task 2",
-      "category": "Tasks",
-      "webhook": "http://localhost:5678/webhook/tasks-dummy-2",
-      "method": "POST"
-    },
-    {
-      "label": "Dummy task 3",
-      "category": "Tasks",
-      "webhook": "http://localhost:5678/webhook/tasks-dummy-3",
-      "method": "POST"
-    },
-    {
-      "label": "Demo success",
-      "category": "Demo",
-      "webhook": "mock://success",
-      "method": "POST"
-    },
-    {
-      "label": "Demo failure",
-      "category": "Demo",
-      "webhook": "mock://failure",
-      "method": "POST"
-    },
-    {
-      "label": "Demo timeout",
-      "category": "Demo",
-      "webhook": "mock://timeout",
-      "method": "POST"
+      "label": "Daily Brief",
+      "description": "Kickstart your day: AI calendar, priority tasks & intelligence briefing",
+      "category": "Daily",
+      "webhook": "https://n8n.crellocrm.com/webhook/daily-brief",
+      "method": "POST",
+      "timeout": 30
     }
   ]
 }
