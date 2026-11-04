@@ -260,3 +260,4 @@ export default function App() {
     <Dots active={screen} />
   </main>;
 }
+

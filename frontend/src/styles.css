@@ -234,3 +234,4 @@ button { font:inherit; -webkit-tap-highlight-color:transparent; touch-action:man
 @media (orientation: portrait) and (max-width: 600px) {
   .music-controls { grid-template-columns: minmax(0, 1fr); }
 }
+
