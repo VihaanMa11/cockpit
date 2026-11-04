@@ -248,7 +248,7 @@ export default function App() {
     return () => { window.removeEventListener("keydown", onDown); window.removeEventListener("keyup", onUp); window.removeEventListener("blur", onBlur); onBlur(); };
   }, [input, screen]);
   if (!config || !state) return <main className="loading">COCKPIT <span>CONNECTING…</span></main>;
-  const workflows = config.workflows || [];
+  const workflows = state?.workflows_list || config.workflows || [];
   return <main className="console">
     <div className="topline"><span className="brand"><i className="brand-mark"><b /><b /><b /></i><span>COCKPIT<small>DESK CONSOLE</small></span></span><span className={`connection ${connected ? "" : "off"}`}><i />{state.mode?.toUpperCase()} <b>·</b> {connected ? "LIVE" : "OFFLINE"}</span></div>
     <div className="viewport" key={screen}>

@@ -109,9 +109,17 @@
   "workflows": [
     {
       "label": "Daily Brief",
-      "description": "Kickstart your day: AI calendar, priority tasks & intelligence briefing",
-      "category": "Daily",
+      "description": "AI morning briefing: schedule, priorities & daily focus",
+      "category": "Agent",
       "webhook": "https://n8n.crellocrm.com/webhook/daily-brief",
+      "method": "POST",
+      "timeout": 30
+    },
+    {
+      "label": "Product Sales Agent",
+      "description": "Automated product outreach, lead qualification & sales engagement",
+      "category": "Agent",
+      "webhook": "https://n8n.crellocrm.com/webhook/product-sales",
       "method": "POST",
       "timeout": 30
     }

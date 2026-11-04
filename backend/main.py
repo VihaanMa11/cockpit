@@ -31,6 +31,7 @@ workflows = config.get("workflows", [])
 state = {
     "mode": "mock", "screen_index": 0, "selection_index": 0,
     "workflows": [{"status": "idle", "last_run": None, "error": None} for _ in workflows],
+    "workflows_list": workflows,
     "music": {}, "sensors": {}, "events": [],
 }
 remote_music = {"state": None, "updated_at": 0.0, "artwork_hash": None, "art_url": None, "commands": []}
