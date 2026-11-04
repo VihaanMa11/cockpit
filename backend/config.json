@@ -110,16 +110,16 @@
     {
       "label": "Daily Brief",
       "description": "AI morning briefing: schedule, priorities & daily focus",
-      "category": "Agent",
+      "category": "n8n",
       "webhook": "https://n8n.crellocrm.com/webhook/daily-brief",
       "method": "POST",
       "timeout": 30
     },
     {
-      "label": "Product Sales Agent",
-      "description": "Automated product outreach, lead qualification & sales engagement",
-      "category": "Agent",
-      "webhook": "https://n8n.crellocrm.com/webhook/product-sales",
+      "label": "Usage Tracker",
+      "description": "CRM & API agent usage tracking to database",
+      "category": "n8n",
+      "webhook": "https://n8n.crellocrm.com/webhook/usage-tracker",
       "method": "POST",
       "timeout": 30
     }
