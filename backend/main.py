@@ -92,11 +92,12 @@ async def run_workflow(index):
     state["workflows"][index] = {"status": "running", "last_run": time.time(), "error": None}
     push_event("workflow", f"Running {wf.get('label', 'workflow')}")
     await broadcast()
-    timeout = float(wf.get("timeout", 5))
+    timeout = float(wf.get("timeout", 10))
+    url = wf.get("webhook", "")
+    method = wf.get("method", "POST").upper()
+    logger.info("Executing workflow %d ('%s') -> %s %s", index, wf.get('label'), method, url)
     try:
-        url = wf.get("webhook", "")
-        method = wf.get("method", "POST").upper()
-        if config.get("mock_mode", True):
+        if url.startswith("mock://"):
             if url == "mock://timeout":
                 await asyncio.sleep(timeout + 0.5)
                 ok, error = False, "Request timed out"
@@ -108,8 +109,10 @@ async def run_workflow(index):
         else:
             ok, error = await post_webhook(url, {"workflow": wf.get("label"), "ts": time.time()}, method=method, timeout=timeout)
         status = "success" if ok else "failed"
+        logger.info("Workflow '%s' result: %s (error: %s)", wf.get('label'), status, error)
     except Exception as exc:
         status, error = "failed", str(exc)[:80]
+        logger.exception("Workflow '%s' execution failed: %s", wf.get('label'), exc)
     state["workflows"][index] = {"status": status, "last_run": time.time(), "error": error}
     push_event("workflow", f"{wf.get('label', 'Workflow')}: {status}" + (f" — {error}" if error else ""))
     await broadcast()
@@ -129,7 +132,9 @@ async def dispatch_action(action):
         state["selection_index"] = (state["selection_index"] + 1) % max(1, len(workflows))
     elif action == "run_workflow":
         if workflows:
-            asyncio.create_task(run_workflow(state["selection_index"] % len(workflows)))
+            idx = state["selection_index"] % len(workflows)
+            logger.info("dispatch_action: triggering workflow index=%d ('%s')", idx, workflows[idx].get('label'))
+            asyncio.create_task(run_workflow(idx))
     elif action in {"play_pause", "next_track", "previous_track", "volume_up", "volume_down"}:
         remote_is_live = (
             state.get("music", {}).get("source") == "spotify-windows"

@@ -1,6 +1,6 @@
 {
   "mock_mode": false,
-  "button_debounce": 0.05,
+  "button_debounce": 0.02,
   "buttons": {
     "1": {
       "label": "SCREEN",
@@ -40,14 +40,14 @@
       "tasks": "select_next"
     },
     "press": {
-      "home": "none",
+      "home": "run_workflow",
       "music": "play_pause",
       "agents": "run_workflow",
       "tasks": "run_workflow"
     },
     "run": {
       "home": "run_workflow",
-      "music": "play_pause",
+      "music": "run_workflow",
       "agents": "run_workflow",
       "tasks": "run_workflow"
     },
